@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tetr College of Business - Tetr Trial</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&family=Noto+Sans:wght@100..900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#13ec5b",
+              "primary-dark": "#078829",
+              "background-light": "#f6f8f6",
+              "background-dark": "#102216",
+              "text-main": "#0d1b12",
+              "text-muted": "#4c9a66",
+              "card-bg": "#ffffff",
+              "card-bg-dark": "#1a2e20",
+              "accent-light": "#e7f3eb",
+              "accent-dark": "#143d22",
+            },
+            fontFamily: {
+              "sans": ["Lexend", "sans-serif"],
+              "display": ["Lexend", "sans-serif"]
+            },
+            borderRadius: {
+              "xl": "1rem",
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Lexend', sans-serif;
+      }
+      .circular-progress {
+        --progress: 0%;
+        background: radial-gradient(closest-side, white 79%, transparent 80% 100%),
+                    conic-gradient(#13ec5b var(--progress), #e7f3eb 0);
+      }
+      .dark .circular-progress {
+        background: radial-gradient(closest-side, #143d22 79%, transparent 80% 100%),
+                    conic-gradient(#13ec5b var(--progress), #1a3320 0);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3"
+  }
+}
+</script>
+</head>
+  <body class="bg-background-light dark:bg-background-dark text-text-main dark:text-white transition-colors duration-200">
+    <div id="root"></div>
+  </body>
+</html>
