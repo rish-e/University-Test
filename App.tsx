@@ -9,9 +9,11 @@ import { DeadlinesSection } from './components/DeadlinesSection';
 import { ProfileSection } from './components/ProfileSection';
 import { MODULES, USER_PROFILE } from './constants';
 import { AssessmentModule, ModuleStatus, ModuleSection } from './types';
+import { GoogleGenAI, Type } from "@google/genai";
 
 const App: React.FC = () => {
   const [modules, setModules] = useState<AssessmentModule[]>(MODULES);
+  const [userProfile, setUserProfile] = useState(USER_PROFILE);
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
   
   // Navigation State
@@ -26,7 +28,7 @@ const App: React.FC = () => {
   const totalProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   const dynamicUserProfile = {
-    ...USER_PROFILE,
+    ...userProfile,
     totalCompletion: totalProgress,
     // Update daily progress to reflect current session progress (simplified logic)
     dailyProgress: totalProgress 
@@ -41,23 +43,82 @@ const App: React.FC = () => {
   };
 
   const handleStartSection = (moduleId: string, section: ModuleSection) => {
-    // Instead of completing immediately, we launch the runner
-    setActiveAssessment({ moduleId, section });
-    // Note: We keep selectedModuleId active so when we finish, we go back to the modal
+    // If the section doesn't have a start time, set it now
+    const now = Date.now();
+    let effectiveStartTime = section.startTime;
+
+    if (!effectiveStartTime) {
+      effectiveStartTime = now;
+      setModules(currentModules => 
+        currentModules.map(m => {
+          if (m.id !== moduleId || !m.sections) return m;
+          return {
+            ...m,
+            sections: m.sections.map(s => 
+              s.id === section.id ? { ...s, startTime: effectiveStartTime } : s
+            )
+          };
+        })
+      );
+    }
+
+    // Launch the runner with the startTime included
+    // Note: section here comes from the state, so it includes progressState if previously saved
+    setActiveAssessment({ 
+      moduleId, 
+      section: { ...section, startTime: effectiveStartTime } 
+    });
   };
 
-  const handleAssessmentComplete = () => {
+  const handleAssessmentComplete = async (result: { score: number, type: string, data?: any }) => {
     if (!activeAssessment) return;
 
     const { moduleId, section } = activeAssessment;
+    let finalScore = result.score;
+    let analysis = "Completed successfully.";
 
-    // Update the completion state
-    setModules(currentModules => 
-      currentModules.map(module => {
+    // Logic for AI Analysis on Writing Tasks
+    if (result.type === 'writing' && result.data && typeof result.data === 'string') {
+        try {
+           const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+           const resp = await ai.models.generateContent({
+               model: 'gemini-3-flash-preview',
+               contents: `Analyze this short essay/response for a business school application. 
+                          Task ID: ${section.id}.
+                          Response: "${result.data}"
+                          Provide a score (0-100) based on clarity, structure, persuasion, and relevance to the prompt.
+                          Provide a 1-sentence behavioral insight about the candidate's traits (e.g. strategic thinking, resilience).`,
+               config: {
+                   responseMimeType: 'application/json',
+                   responseSchema: {
+                       type: Type.OBJECT,
+                       properties: {
+                           score: { type: Type.INTEGER },
+                           insight: { type: Type.STRING }
+                       }
+                   }
+               }
+           });
+           const json = JSON.parse(resp.text || "{}");
+           finalScore = json.score || 75;
+           analysis = json.insight || "Good effort showing potential.";
+        } catch (e) {
+           console.error("AI Analysis failed", e);
+           finalScore = 80; // Fallback
+           analysis = "Analysis unavailable.";
+        }
+    } else if (result.type === 'video') {
+       // Mock video analysis since we don't have real video processing
+       finalScore = Math.floor(Math.random() * (95 - 75) + 75);
+       analysis = "Candidate shows strong non-verbal communication and confidence.";
+    }
+
+    // Update Modules State
+    const updatedModules = modules.map(module => {
         if (module.id !== moduleId || !module.sections) return module;
 
         const updatedSections = module.sections.map(s => 
-          s.id === section.id ? { ...s, isCompleted: true } : s
+          s.id === section.id ? { ...s, isCompleted: true, score: finalScore, analysis: analysis, userResponse: result.data } : s
         );
 
         const completedCount = updatedSections.filter(s => s.isCompleted).length;
@@ -71,15 +132,63 @@ const App: React.FC = () => {
           progress: newProgress,
           status: newProgress === 100 ? ModuleStatus.Completed : ModuleStatus.Active
         };
-      })
-    );
+    });
+
+    setModules(updatedModules);
+
+    // Update User Profile Metrics based on completed sections
+    // Mapping: 1->Cognitive, 2->Behavioral, 3->Technical, 4->Communication/Leadership
+    // We recalculate averages based on ALL completed sections across modules
+    
+    let cogSum = 0, cogCount = 0;
+    let behSum = 0, behCount = 0;
+    let techSum = 0, techCount = 0;
+    let commSum = 0, commCount = 0;
+    
+    updatedModules.forEach(mod => {
+       if(!mod.sections) return;
+       mod.sections.forEach(sect => {
+          if (sect.isCompleted && sect.score !== undefined) {
+             if (mod.id === '1') { cogSum += sect.score; cogCount++; }
+             if (mod.id === '2') { behSum += sect.score; behCount++; }
+             if (mod.id === '3') { techSum += sect.score; techCount++; }
+             if (mod.id === '4' || mod.id === '5') { commSum += sect.score; commCount++; }
+          }
+       });
+    });
+
+    setUserProfile(prev => ({
+        ...prev,
+        metrics: {
+            cognitive: cogCount > 0 ? Math.round(cogSum / cogCount) : 0,
+            technical: techCount > 0 ? Math.round(techSum / techCount) : 0,
+            behavioral: behCount > 0 ? Math.round(behSum / behCount) : 0,
+            communication: commCount > 0 ? Math.round(commSum / commCount) : 0,
+            leadership: commCount > 0 ? Math.round((commSum / commCount) * 0.9) : 0 // heuristic
+        }
+    }));
 
     // Close the runner, return to modal
     setActiveAssessment(null);
   };
 
-  const handleAssessmentExit = () => {
-    // Just close the runner without saving
+  const handleAssessmentExit = (progressToSave?: any) => {
+    // If progressToSave is provided, update the module section with this progress
+    if (activeAssessment && progressToSave) {
+        setModules(currentModules => 
+          currentModules.map(m => {
+            if (m.id !== activeAssessment.moduleId || !m.sections) return m;
+            return {
+              ...m,
+              sections: m.sections.map(s => 
+                s.id === activeAssessment.section.id 
+                  ? { ...s, progressState: progressToSave } 
+                  : s
+              )
+            };
+          })
+        );
+    }
     setActiveAssessment(null);
   };
 
@@ -123,7 +232,7 @@ const App: React.FC = () => {
         )}
 
         {activeTab === 'profile' && (
-          <ProfileSection user={dynamicUserProfile} />
+          <ProfileSection user={dynamicUserProfile} modules={modules} />
         )}
 
         <Footer />

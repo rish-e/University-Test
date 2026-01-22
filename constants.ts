@@ -6,7 +6,14 @@ export const USER_PROFILE: UserProfile = {
   term: "Fall 2024",
   avatarUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDZwNRzasI7rQ9T0nx91EQGGq-4CXN6ROS7aF6QvjmPxitxuckr94wxld9BuoNxW6BWIqjN9FDLTuyHAHEO9SRT8aJ70qsUVoL9iGVfv706G6msuiIHilUcceciphqN8_IyKqYfI5y_-0EuV6kyYyu4qIdlKK24hfXY9Ji5ANCX01I0XJOyi4RCvCkKNKxRfEaoZT-rR43GtzSh37lHG-_CxnaTR4CLPV_25jHfzg2YOGeHqtTpTReY_sDLFyZbg7UqalNQZDkdGO0",
   totalCompletion: 0,
-  dailyProgress: 0
+  dailyProgress: 0,
+  metrics: {
+    cognitive: 0,
+    technical: 0,
+    behavioral: 0,
+    communication: 0,
+    leadership: 0
+  }
 };
 
 export const MODULES: AssessmentModule[] = [

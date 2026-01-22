@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AssessmentModule, ModuleSection } from '../types';
 
 interface ModuleDetailModalProps {
@@ -10,19 +10,40 @@ interface ModuleDetailModalProps {
 
 export const ModuleDetailModal: React.FC<ModuleDetailModalProps> = ({ module, isOpen, onClose, onStartSection }) => {
   
-  // Lock body scroll when modal is open
+  // Force update for timer
+  const [, forceUpdate] = useState(0);
+
+  // Lock body scroll when modal is open and setup timer
   useEffect(() => {
     if (isOpen) {
       document.body.classList.add('overflow-hidden');
+      const timer = setInterval(() => forceUpdate(n => n + 1), 1000);
+      return () => {
+        clearInterval(timer);
+        document.body.classList.remove('overflow-hidden');
+      };
     } else {
       document.body.classList.remove('overflow-hidden');
     }
-    
-    // Cleanup function to ensure scroll is restored if component unmounts
-    return () => {
-      document.body.classList.remove('overflow-hidden');
-    };
   }, [isOpen]);
+
+  // Helper to get time remaining for a running section
+  const getRemainingTimeData = (section: ModuleSection) => {
+    if (!section.startTime || !section.duration) return null;
+    
+    const match = section.duration.match(/(\d+)/);
+    const totalSeconds = match ? parseInt(match[0]) * 60 : 600;
+    const elapsed = Math.floor((Date.now() - section.startTime) / 1000);
+    const remaining = totalSeconds - elapsed;
+    
+    return Math.max(0, remaining);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   if (!isOpen || !module) return null;
 
@@ -56,48 +77,74 @@ export const ModuleDetailModal: React.FC<ModuleDetailModalProps> = ({ module, is
           
           {module.sections ? (
              <div className="space-y-3">
-              {module.sections.map((section) => (
-                <div 
-                  key={section.id} 
-                  className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-all ${section.isCompleted ? 'bg-accent-light/30 dark:bg-accent-dark/20 border-transparent' : 'bg-white dark:bg-white/5 border-text-main/5 dark:border-white/5 hover:border-primary/30'}`}
-                >
-                  <div className="flex items-start gap-4 mb-3 sm:mb-0">
-                    <div className={`mt-1 size-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${section.isCompleted ? 'bg-primary text-black' : 'bg-background-light dark:bg-white/10 text-text-muted'}`}>
-                      {section.isCompleted ? (
-                        <span className="material-symbols-outlined text-sm">check</span>
+              {module.sections.map((section) => {
+                const remainingTime = getRemainingTimeData(section);
+                // A section is active if it has started, is not completed, and has time remaining
+                const isActive = section.startTime && !section.isCompleted && remainingTime !== null && remainingTime > 0;
+                // If time ran out but it's not marked completed, treat as expired/auto-submit state visually (or user needs to open to finalize)
+                const isExpired = section.startTime && !section.isCompleted && remainingTime === 0;
+
+                const cardClasses = section.isCompleted 
+                  ? 'bg-accent-light/30 dark:bg-accent-dark/20 border-transparent' 
+                  : isActive || isExpired
+                    ? 'bg-white dark:bg-white/5 border-red-500 ring-1 ring-red-500' // Red highlight for active/expired
+                    : 'bg-white dark:bg-white/5 border-text-main/5 dark:border-white/5 hover:border-primary/30';
+
+                return (
+                  <div 
+                    key={section.id} 
+                    className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-all ${cardClasses}`}
+                  >
+                    <div className="flex items-start gap-4 mb-3 sm:mb-0">
+                      <div className={`mt-1 size-8 rounded-full flex items-center justify-center shrink-0 transition-colors ${section.isCompleted ? 'bg-primary text-black' : isActive || isExpired ? 'bg-red-500 text-white animate-pulse' : 'bg-background-light dark:bg-white/10 text-text-muted'}`}>
+                        {section.isCompleted ? (
+                          <span className="material-symbols-outlined text-sm">check</span>
+                        ) : isActive || isExpired ? (
+                          <span className="material-symbols-outlined text-sm">timer</span>
+                        ) : (
+                          <span className="text-xs font-bold">{section.id.replace(/[a-z]/g,'')}</span>
+                        )}
+                      </div>
+                      <div>
+                        <h5 className={`font-bold ${section.isCompleted ? 'text-text-main dark:text-white line-through opacity-70' : 'text-text-main dark:text-white'}`}>
+                          {section.title}
+                        </h5>
+                        <p className="text-xs text-text-muted mt-1">{section.description}</p>
+                        {section.duration && !section.isCompleted && !isActive && !isExpired && (
+                          <div className="flex items-center gap-1 mt-2">
+                            <span className="material-symbols-outlined text-[10px] text-text-muted">timer</span>
+                            <span className="text-[10px] text-text-muted uppercase tracking-wider">{section.duration}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Section Action */}
+                    <div className="flex items-center self-end sm:self-center gap-4">
+                      {isActive && remainingTime !== null && (
+                         <span className="font-mono font-bold text-red-500 animate-pulse">
+                           {formatTime(remainingTime)}
+                         </span>
+                      )}
+                      
+                      {!section.isCompleted ? (
+                         <button 
+                          onClick={() => onStartSection(module.id, section)}
+                          className={`px-6 py-2 rounded-lg text-sm font-bold transition-transform active:scale-95 shadow-sm hover:shadow-md ${
+                            isActive || isExpired
+                              ? 'bg-red-500 hover:bg-red-600 text-white shadow-red-500/20'
+                              : 'bg-primary hover:bg-[#00d64b] text-black shadow-primary/20'
+                          }`}
+                         >
+                           {isActive ? 'Resume' : isExpired ? 'Submit' : 'Start'}
+                         </button>
                       ) : (
-                        <span className="text-xs font-bold">{section.id.replace(/[a-z]/g,'')}</span>
-                      )}
-                    </div>
-                    <div>
-                      <h5 className={`font-bold ${section.isCompleted ? 'text-text-main dark:text-white line-through opacity-70' : 'text-text-main dark:text-white'}`}>
-                        {section.title}
-                      </h5>
-                      <p className="text-xs text-text-muted mt-1">{section.description}</p>
-                      {section.duration && !section.isCompleted && (
-                        <div className="flex items-center gap-1 mt-2">
-                          <span className="material-symbols-outlined text-[10px] text-text-muted">timer</span>
-                          <span className="text-[10px] text-text-muted uppercase tracking-wider">{section.duration}</span>
-                        </div>
+                        <span className="px-4 py-2 text-xs font-bold text-primary-dark dark:text-primary bg-primary/10 rounded-lg">Completed</span>
                       )}
                     </div>
                   </div>
-                  
-                  {/* Section Action */}
-                  <div className="flex items-center self-end sm:self-center">
-                    {!section.isCompleted ? (
-                       <button 
-                        onClick={() => onStartSection(module.id, section)}
-                        className="px-6 py-2 bg-primary hover:bg-[#00d64b] text-black rounded-lg text-sm font-bold transition-transform active:scale-95 shadow-sm hover:shadow-md shadow-primary/20"
-                       >
-                         Start
-                       </button>
-                    ) : (
-                      <span className="px-4 py-2 text-xs font-bold text-primary-dark dark:text-primary bg-primary/10 rounded-lg">Completed</span>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-12">

@@ -44,14 +44,10 @@ export const Header: React.FC<HeaderProps> = ({ user, activeTab, onTabChange }) 
             <div className="relative">
                 <button 
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-1 pl-1 pr-1 py-1 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors border border-transparent hover:border-black/5 dark:hover:border-white/5"
+                  className="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-text-muted"
+                  aria-label="Open menu"
                 >
-                    <div 
-                        className="size-10 rounded-full border-2 border-primary/30 bg-center bg-cover" 
-                        aria-label="Student profile picture avatar" 
-                        style={{ backgroundImage: `url("${user.avatarUrl}")` }}
-                    />
-                    <span className={`material-symbols-outlined text-text-muted transition-transform duration-200 ${isMenuOpen ? 'rotate-180' : ''}`}>expand_more</span>
+                    <span className="material-symbols-outlined text-2xl">menu</span>
                 </button>
 
                 {isMenuOpen && (
