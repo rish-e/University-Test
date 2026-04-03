@@ -8,12 +8,25 @@ import { GameIntro } from '../shared/GameIntro';
 
 type MasterPhase = 'intro' | 'phase1' | 'phase1-results' | 'phase2' | 'phase2-results' | 'phase3' | 'phase3-response' | 'phase3-results' | 'final';
 
+interface DimensionDeltas {
+  riskTolerance: number;
+  strategicThinking: number;
+  peopleFocus: number;
+  timeHorizon: number;
+}
+
+interface SupplyChoice {
+  text: string;
+  effect: { capital: number; satisfaction: number };
+  dimensions: DimensionDeltas;
+}
+
 interface SupplyScenario {
   title: string;
   context: string;
   affectedNode: number;
   ticker: string;
-  choices: { text: string; effect: { capital: number; satisfaction: number } }[];
+  choices: SupplyChoice[];
 }
 
 interface InnovationDecision {
@@ -48,9 +61,21 @@ const SUPPLY_SCENARIOS: SupplyScenario[] = [
     affectedNode: 0,
     ticker: 'BREAKING: Hurricane disrupts major shipping lanes -- commodity prices surge 40%',
     choices: [
-      { text: 'Air-freight from backup supplier', effect: { capital: -3000, satisfaction: 10 } },
-      { text: 'Pause production and wait', effect: { capital: 0, satisfaction: -20 } },
-      { text: 'Switch to local materials', effect: { capital: -500, satisfaction: -10 } },
+      {
+        text: 'Air-freight from backup supplier',
+        effect: { capital: -3000, satisfaction: 10 },
+        dimensions: { riskTolerance: 10, strategicThinking: 5, peopleFocus: -5, timeHorizon: -10 },
+      },
+      {
+        text: 'Pause production and wait',
+        effect: { capital: 0, satisfaction: -20 },
+        dimensions: { riskTolerance: -15, strategicThinking: -5, peopleFocus: 10, timeHorizon: 5 },
+      },
+      {
+        text: 'Switch to local materials',
+        effect: { capital: -500, satisfaction: -10 },
+        dimensions: { riskTolerance: 5, strategicThinking: 10, peopleFocus: 5, timeHorizon: -5 },
+      },
     ],
   },
   {
@@ -59,9 +84,21 @@ const SUPPLY_SCENARIOS: SupplyScenario[] = [
     affectedNode: 2,
     ticker: 'TRENDING: Product goes viral -- analysts predict 3-month sustained demand spike',
     choices: [
-      { text: 'Run factory at double overtime', effect: { capital: -2000, satisfaction: 25 } },
-      { text: 'Outsource to 3rd party manufacturer', effect: { capital: -1000, satisfaction: 5 } },
-      { text: 'Raise prices to dampen demand', effect: { capital: 1000, satisfaction: -15 } },
+      {
+        text: 'Run factory at double overtime',
+        effect: { capital: -2000, satisfaction: 25 },
+        dimensions: { riskTolerance: 10, strategicThinking: -5, peopleFocus: -10, timeHorizon: -5 },
+      },
+      {
+        text: 'Outsource to 3rd party manufacturer',
+        effect: { capital: -1000, satisfaction: 5 },
+        dimensions: { riskTolerance: 5, strategicThinking: 10, peopleFocus: 5, timeHorizon: 10 },
+      },
+      {
+        text: 'Raise prices to dampen demand',
+        effect: { capital: 1000, satisfaction: -15 },
+        dimensions: { riskTolerance: -5, strategicThinking: 8, peopleFocus: -12, timeHorizon: 8 },
+      },
     ],
   },
   {
@@ -70,9 +107,21 @@ const SUPPLY_SCENARIOS: SupplyScenario[] = [
     affectedNode: 1,
     ticker: 'ESG REPORT: Companies with green supply chains see 25% higher investor confidence',
     choices: [
-      { text: 'Fully commit to audit & upgrades', effect: { capital: -4000, satisfaction: 30 } },
-      { text: 'Greenwash marketing campaign', effect: { capital: -500, satisfaction: -5 } },
-      { text: 'Ignore and focus on profitability', effect: { capital: 0, satisfaction: 0 } },
+      {
+        text: 'Fully commit to audit & upgrades',
+        effect: { capital: -4000, satisfaction: 30 },
+        dimensions: { riskTolerance: 5, strategicThinking: 10, peopleFocus: 12, timeHorizon: 10 },
+      },
+      {
+        text: 'Greenwash marketing campaign',
+        effect: { capital: -500, satisfaction: -5 },
+        dimensions: { riskTolerance: 8, strategicThinking: -8, peopleFocus: -10, timeHorizon: -8 },
+      },
+      {
+        text: 'Ignore and focus on profitability',
+        effect: { capital: 0, satisfaction: 0 },
+        dimensions: { riskTolerance: -5, strategicThinking: -5, peopleFocus: -8, timeHorizon: -5 },
+      },
     ],
   },
   {
@@ -81,9 +130,21 @@ const SUPPLY_SCENARIOS: SupplyScenario[] = [
     affectedNode: 3,
     ticker: 'TECH: AI logistics platforms report average 28% cost reduction for early adopters',
     choices: [
-      { text: 'Full implementation now', effect: { capital: -3000, satisfaction: 20 } },
-      { text: 'Pilot in one region first', effect: { capital: -1000, satisfaction: 5 } },
-      { text: 'Wait and see competitor results', effect: { capital: 0, satisfaction: -10 } },
+      {
+        text: 'Full implementation now',
+        effect: { capital: -3000, satisfaction: 20 },
+        dimensions: { riskTolerance: 12, strategicThinking: 10, peopleFocus: -5, timeHorizon: 12 },
+      },
+      {
+        text: 'Pilot in one region first',
+        effect: { capital: -1000, satisfaction: 5 },
+        dimensions: { riskTolerance: -5, strategicThinking: 8, peopleFocus: 5, timeHorizon: 5 },
+      },
+      {
+        text: 'Wait and see competitor results',
+        effect: { capital: 0, satisfaction: -10 },
+        dimensions: { riskTolerance: -10, strategicThinking: -8, peopleFocus: 8, timeHorizon: -8 },
+      },
     ],
   },
 ];
@@ -142,6 +203,14 @@ const ARCHETYPES = [
   { min: 4, max: 5, name: 'Radical Disruptor', desc: 'You bet big on transformation every single time.', color: '#ef4444', icon: 'rocket_launch' },
 ];
 
+// Dimension display config
+const DIMENSION_CONFIG = [
+  { key: 'riskTolerance' as const, label: 'Risk Tolerance', lowLabel: 'Cautious', highLabel: 'Aggressive', color: '#f97316', icon: 'explore' },
+  { key: 'strategicThinking' as const, label: 'Strategic Thinking', lowLabel: 'Reactive', highLabel: 'Proactive', color: '#8b5cf6', icon: 'psychology' },
+  { key: 'peopleFocus' as const, label: 'People vs Profit', lowLabel: 'People-first', highLabel: 'Profit-first', color: '#ec4899', icon: 'groups' },
+  { key: 'timeHorizon' as const, label: 'Time Horizon', lowLabel: 'Short-term', highLabel: 'Long-term', color: '#06b6d4', icon: 'schedule' },
+];
+
 // ============================================================================
 // INLINE KEYFRAME STYLES
 // ============================================================================
@@ -164,7 +233,38 @@ const KEYFRAME_STYLES = `
 @keyframes countUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes headlineSlide { from { opacity: 0; transform: translateY(-20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
 @keyframes progressPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+@keyframes spectrumPulse { 0%, 100% { box-shadow: 0 0 0 rgba(255,255,255,0); } 50% { box-shadow: 0 0 12px rgba(255,255,255,0.3); } }
 `;
+
+// ============================================================================
+// HELPER: Generate personality summary from dimensions
+// ============================================================================
+
+function generateSummary(dims: { riskTolerance: number; strategicThinking: number; peopleFocus: number; timeHorizon: number }): string {
+  const parts: string[] = [];
+
+  // Risk
+  if (dims.riskTolerance >= 65) parts.push('embraces bold risks');
+  else if (dims.riskTolerance >= 40) parts.push('takes calculated risks');
+  else parts.push('favors caution and stability');
+
+  // Strategic
+  if (dims.strategicThinking >= 65) parts.push('thinks proactively about the future');
+  else if (dims.strategicThinking >= 40) parts.push('balances reaction with planning');
+  else parts.push('responds decisively to present challenges');
+
+  // People/Profit
+  if (dims.peopleFocus <= 35) parts.push('puts people and relationships first');
+  else if (dims.peopleFocus <= 60) parts.push('balances people needs with business goals');
+  else parts.push('drives hard toward profitability');
+
+  // Time Horizon
+  if (dims.timeHorizon >= 65) parts.push('with a long-term vision');
+  else if (dims.timeHorizon >= 40) parts.push('with a balanced time perspective');
+  else parts.push('with a focus on immediate results');
+
+  return `You're a leader who ${parts[0]}, ${parts[1]}, and ${parts[2]} ${parts[3]}.`;
+}
 
 // ============================================================================
 // COMPONENT
@@ -176,6 +276,15 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
   const startTimeRef = useRef<number>(Date.now());
   const overallTimerRef = useRef<number | null>(null);
   const [overallTime, setOverallTime] = useState(0);
+
+  // --- Behavioral Dimensions (all start at 50) ---
+  const [riskTolerance, setRiskTolerance] = useState(50);
+  const [strategicThinking, setStrategicThinking] = useState(50);
+  const [peopleFocus, setPeopleFocus] = useState(50);
+  const [timeHorizon, setTimeHorizon] = useState(50);
+
+  // Snapshot after phase 1 for showing shifts
+  const [p1StartDims] = useState({ riskTolerance: 50, strategicThinking: 50, peopleFocus: 50, timeHorizon: 50 });
 
   // --- Phase 1: Supply Chain ---
   const [p1Step, setP1Step] = useState(0);
@@ -257,6 +366,14 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
 
   const clamp = (val: number, min: number, max: number) => Math.max(min, Math.min(max, val));
 
+  // --- Dimension update helper ---
+  const applyDimensions = (deltas: DimensionDeltas) => {
+    setRiskTolerance(prev => clamp(prev + deltas.riskTolerance, 0, 100));
+    setStrategicThinking(prev => clamp(prev + deltas.strategicThinking, 0, 100));
+    setPeopleFocus(prev => clamp(prev + deltas.peopleFocus, 0, 100));
+    setTimeHorizon(prev => clamp(prev + deltas.timeHorizon, 0, 100));
+  };
+
   // --- Phase label ---
   const getPhaseLabel = () => {
     if (masterPhase === 'phase1' || masterPhase === 'phase1-results') return 'Supply Chain';
@@ -282,7 +399,7 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
       correctCount: p1ChoiceHistory.length + p3Choices.length,
       textInput: '',
       gameScore: 0,
-      simState: { masterPhase, capital, satisfaction, totalBanked, marketShare, reputation },
+      simState: { masterPhase, capital, satisfaction, totalBanked, marketShare, reputation, riskTolerance, strategicThinking, peopleFocus, timeHorizon },
       xpEarned: 0,
     };
     onExit(progress);
@@ -291,12 +408,13 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
   // Phase 1 handlers
   const handleP1Choice = (choiceIdx: number) => {
     const scenario = SUPPLY_SCENARIOS[p1Step];
-    const effect = scenario.choices[choiceIdx].effect;
+    const choice = scenario.choices[choiceIdx];
 
-    setP1ShowEffect(effect);
-    setCapital(prev => prev + effect.capital);
-    setSatisfaction(prev => clamp(prev + effect.satisfaction, 0, 100));
+    setP1ShowEffect(choice.effect);
+    setCapital(prev => prev + choice.effect.capital);
+    setSatisfaction(prev => clamp(prev + choice.effect.satisfaction, 0, 100));
     setP1ChoiceHistory(prev => [...prev, choiceIdx]);
+    applyDimensions(choice.dimensions);
     onXPGain(20, `Supply Chain: ${scenario.title}`);
 
     setTimeout(() => {
@@ -361,6 +479,48 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
     setBalloonRound(r => r + 1);
   };
 
+  // Compute balloon behavioral adjustments
+  const computeBalloonDimensions = useCallback(() => {
+    const completedRounds = balloonHistory;
+    if (completedRounds.length === 0) return { riskDelta: 0, description: 'No rounds completed', pattern: 'neutral' };
+
+    const totalPumps = completedRounds.reduce((sum, r) => sum + r.pumps, 0);
+    const avgPumps = totalPumps / completedRounds.length;
+    const earlyBanks = completedRounds.filter(r => !r.popped && r.pumps < 3).length;
+    const aggressivePushes = completedRounds.filter(r => r.pumps > 5).length;
+    const popCount = completedRounds.filter(r => r.popped).length;
+
+    let riskDelta = 0;
+    let description = '';
+    let pattern = 'balanced';
+
+    // Average pump count adjustment
+    if (avgPumps < 3) {
+      riskDelta -= 15;
+      pattern = 'cautious';
+      description = `You banked early ${earlyBanks} time${earlyBanks !== 1 ? 's' : ''} -- cautious, safety-first approach.`;
+    } else if (avgPumps > 5) {
+      riskDelta += 15;
+      pattern = 'aggressive';
+      description = `You pushed past the danger zone ${aggressivePushes} time${aggressivePushes !== 1 ? 's' : ''} -- aggressive risk-taker.`;
+    } else {
+      description = `Avg ${avgPumps.toFixed(1)} pumps per round -- balanced risk management.`;
+    }
+
+    // Popping adjustment
+    if (popCount >= 3) {
+      riskDelta += 10;
+      description += ` Popped ${popCount} times -- you push limits.`;
+    } else if (popCount === 0 && completedRounds.length >= 3) {
+      riskDelta -= 5;
+      description += ' Never popped -- disciplined restraint.';
+    } else if (popCount > 0) {
+      description += ` Popped ${popCount} time${popCount !== 1 ? 's' : ''}.`;
+    }
+
+    return { riskDelta, description, pattern, earlyBanks, aggressivePushes, popCount, avgPumps };
+  }, [balloonHistory]);
+
   // Phase 3 handlers
   const handleP3Choice = (choiceIdx: 0 | 1) => {
     const decision = INNOVATION_DECISIONS[p3Step];
@@ -371,6 +531,14 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
     setReputation(r => clamp(r + choice.repDelta, 0, 100));
     setP3Choices(prev => [...prev, { step: p3Step, type: choice.type }]);
     setLastMarketResponse(choice.marketResponse);
+
+    // Apply dimension impacts for Phase 3
+    if (choice.type === 'risky') {
+      applyDimensions({ riskTolerance: 5, strategicThinking: 8, peopleFocus: 0, timeHorizon: 5 });
+    } else {
+      applyDimensions({ riskTolerance: -5, strategicThinking: -3, peopleFocus: 5, timeHorizon: -5 });
+    }
+
     onXPGain(15, `Innovation: ${decision.title}`);
     setMasterPhase('phase3-response');
   };
@@ -384,45 +552,26 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
     }
   };
 
-  // Final scoring
+  // Final
   const getArchetype = () => {
     return ARCHETYPES.find(a => riskyCount >= a.min && riskyCount <= a.max) || ARCHETYPES[2];
   };
 
-  const computeScores = () => {
-    const p1Score = clamp(satisfaction, 0, 100);
-    const p2Score = clamp(Math.round(totalBanked / 2), 0, 100);
-    const p3Score = clamp(reputation, 0, 100);
-    const overall = Math.round(p1Score * 0.4 + p2Score * 0.3 + p3Score * 0.3);
-    return { p1Score, p2Score, p3Score, overall };
-  };
-
   const handleFinalComplete = () => {
-    const scores = computeScores();
     const archetype = getArchetype();
     const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
     const result: GameResult = {
-      score: scores.overall,
-      rawScore: scores.p1Score + scores.p2Score + scores.p3Score,
+      score: Math.round((riskTolerance + strategicThinking + (100 - peopleFocus) + timeHorizon) / 4),
+      rawScore: 0,
       timeSpent,
-      metrics: {
-        phase1_satisfaction: satisfaction,
-        phase1_capital: capital,
-        phase2_totalBanked: totalBanked,
-        phase2_rounds: balloonHistory.length,
-        phase2_poppedCount: balloonHistory.filter(h => h.popped).length,
-        phase3_riskyChoices: riskyCount,
-        phase3_marketShare: marketShare,
-        phase3_reputation: reputation,
-        overallScore: scores.overall,
-      },
       type: 'game',
+      metrics: { riskTolerance, strategicThinking, peopleFocus, timeHorizon },
       data: {
+        profile: { riskTolerance, strategicThinking, peopleFocus, timeHorizon },
         archetype: archetype.name,
-        scores,
-        p1ChoiceHistory,
+        phase1Choices: p1ChoiceHistory,
         balloonHistory,
-        p3Choices,
+        phase3Choices: p3Choices,
       },
     };
     onComplete(result);
@@ -470,7 +619,7 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
     );
   };
 
-  // Meter bar component
+  // Meter bar component (for engagement meters: capital, satisfaction, etc.)
   const MeterBar = ({ label, value, max, color, icon, suffix, delta }: {
     label: string; value: number; max: number; color: string; icon: string; suffix?: string; delta?: number | null;
   }) => {
@@ -511,6 +660,52 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
     );
   };
 
+  // Spectrum bar component for behavioral dimensions
+  const SpectrumBar = ({ dimKey, value, animate = false }: {
+    dimKey: typeof DIMENSION_CONFIG[number]['key']; value: number; animate?: boolean;
+  }) => {
+    const config = DIMENSION_CONFIG.find(d => d.key === dimKey)!;
+    return (
+      <div className="mb-3" style={animate ? { animation: 'fadeIn 0.4s ease-out' } : undefined}>
+        <div className="flex items-center justify-between mb-1.5">
+          <div className="flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-sm" style={{ color: config.color }}>{config.icon}</span>
+            <span className="text-xs font-bold text-text-muted uppercase tracking-wider">{config.label}</span>
+          </div>
+          <span className="text-xs font-black text-text-main dark:text-white tabular-nums">{value}</span>
+        </div>
+        <div className="relative">
+          <div className="h-3 bg-black/10 dark:bg-white/10 rounded-full overflow-hidden relative">
+            {/* Center marker */}
+            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/30 dark:bg-white/20 z-10" />
+            {/* Fill bar */}
+            <div
+              className="absolute top-0 h-full rounded-full transition-all duration-700 ease-out"
+              style={{
+                left: value >= 50 ? '50%' : `${value}%`,
+                width: value >= 50 ? `${value - 50}%` : `${50 - value}%`,
+                backgroundColor: config.color,
+                boxShadow: `0 0 8px ${config.color}50`,
+              }}
+            />
+            {/* Indicator dot */}
+            <div
+              className="absolute top-1/2 -translate-y-1/2 size-3.5 rounded-full border-2 border-white shadow-md transition-all duration-700 ease-out z-20"
+              style={{
+                left: `calc(${value}% - 7px)`,
+                backgroundColor: config.color,
+              }}
+            />
+          </div>
+          <div className="flex justify-between mt-1">
+            <span className="text-[10px] text-text-muted">{config.lowLabel}</span>
+            <span className="text-[10px] text-text-muted">{config.highLabel}</span>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // ============================================================================
   // PHASE RENDERS
   // ============================================================================
@@ -522,14 +717,14 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
         <style>{KEYFRAME_STYLES}</style>
         <GameIntro
           title="Startup Survival"
-          description="Navigate supply chain crises, manage risk under pressure, and chart your startup's innovation path."
+          description="Navigate supply chain crises, manage risk under pressure, and chart your startup's innovation path. There are no right or wrong answers -- every choice builds your unique behavioral profile."
           icon="rocket_launch"
           duration="~25 min"
           rules={[
-            'Phase 1: Make 4 supply chain decisions -- manage capital and satisfaction',
-            'Phase 2: A 60-second risk/reward balloon game -- bank before it pops!',
+            'Phase 1: Make 4 supply chain decisions that reveal your leadership style',
+            'Phase 2: A 60-second risk/reward balloon game -- how far will you push?',
             'Phase 3: 5 strategic startup decisions that shape your innovation profile',
-            'Your combined performance across all 3 phases determines your score',
+            'Your choices build a 4-dimension behavioral profile -- no scores, just you',
           ]}
           onStart={handleStart}
         />
@@ -609,7 +804,7 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
             </div>
           </div>
 
-          {/* Meters */}
+          {/* Engagement Meters */}
           <div className="flex gap-4 mb-4">
             <MeterBar
               label="Capital"
@@ -696,24 +891,45 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
         <style>{KEYFRAME_STYLES}</style>
         <div className="max-w-lg mx-auto mt-12" style={{ animation: 'resultCardIn 0.5s ease-out' }}>
           {renderHUD()}
-          <div className="bg-card-bg dark:bg-card-bg-dark p-8 rounded-3xl shadow-xl border border-text-main/5 dark:border-white/5 text-center">
-            <div className="size-16 mx-auto mb-4 rounded-full bg-blue-500/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-4xl text-blue-500">local_shipping</span>
+          <div className="bg-card-bg dark:bg-card-bg-dark p-8 rounded-3xl shadow-xl border border-text-main/5 dark:border-white/5">
+            <div className="text-center mb-6">
+              <div className="size-16 mx-auto mb-4 rounded-full bg-blue-500/10 flex items-center justify-center">
+                <span className="material-symbols-outlined text-4xl text-blue-500">local_shipping</span>
+              </div>
+              <h2 className="text-2xl font-black text-text-main dark:text-white mb-1">Phase 1 Complete</h2>
+              <p className="text-sm text-text-muted mb-2">Your decisions reveal these behavioral shifts</p>
             </div>
-            <h2 className="text-2xl font-black text-text-main dark:text-white mb-1">Phase 1 Complete</h2>
-            <p className="text-sm text-text-muted mb-6">Supply Chain Crisis Results</p>
 
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-background-light dark:bg-white/5 rounded-xl p-4">
-                <p className="text-xs text-text-muted uppercase font-bold mb-1">Final Capital</p>
-                <p className="text-2xl font-black" style={{ color: capital >= 0 ? '#22c55e' : '#ef4444' }}>
+            {/* Engagement stats (small, secondary) */}
+            <div className="grid grid-cols-2 gap-3 mb-5">
+              <div className="bg-background-light dark:bg-white/5 rounded-xl p-3 text-center">
+                <p className="text-[10px] text-text-muted uppercase font-bold mb-1">Final Capital</p>
+                <p className="text-lg font-black" style={{ color: capital >= 0 ? '#22c55e' : '#ef4444' }}>
                   ${capital.toLocaleString()}
                 </p>
               </div>
-              <div className="bg-background-light dark:bg-white/5 rounded-xl p-4">
-                <p className="text-xs text-text-muted uppercase font-bold mb-1">Satisfaction</p>
-                <p className="text-2xl font-black text-primary">{satisfaction}%</p>
+              <div className="bg-background-light dark:bg-white/5 rounded-xl p-3 text-center">
+                <p className="text-[10px] text-text-muted uppercase font-bold mb-1">Satisfaction</p>
+                <p className="text-lg font-black text-primary">{satisfaction}%</p>
               </div>
+            </div>
+
+            {/* Dimension Spectrum Bars */}
+            <div className="bg-background-light dark:bg-white/5 rounded-2xl p-5 mb-6">
+              <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-4">Behavioral Profile Shifts</p>
+              {DIMENSION_CONFIG.map((dim, i) => (
+                <div key={dim.key} style={{ animation: `fadeIn 0.4s ease-out ${i * 0.1}s both` }}>
+                  <SpectrumBar
+                    dimKey={dim.key}
+                    value={
+                      dim.key === 'riskTolerance' ? riskTolerance :
+                      dim.key === 'strategicThinking' ? strategicThinking :
+                      dim.key === 'peopleFocus' ? peopleFocus :
+                      timeHorizon
+                    }
+                  />
+                </div>
+              ))}
             </div>
 
             <button
@@ -924,43 +1140,75 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
 
   // --- PHASE 2 RESULTS ---
   if (masterPhase === 'phase2-results') {
-    const p2Score = clamp(Math.round(totalBanked / 2), 0, 100);
+    const balloonData = computeBalloonDimensions();
     const poppedCount = balloonHistory.filter(h => h.popped).length;
     const bankedCount = balloonHistory.filter(h => !h.popped).length;
+
+    // Apply balloon risk tolerance adjustment once when entering this phase
+    // (We use a ref trick: check if we already applied it)
+    const riskAfterBalloon = clamp(riskTolerance + balloonData.riskDelta, 0, 100);
+
+    const patternIcon = balloonData.pattern === 'cautious' ? 'shield' : balloonData.pattern === 'aggressive' ? 'local_fire_department' : 'balance';
+    const patternColor = balloonData.pattern === 'cautious' ? '#3b82f6' : balloonData.pattern === 'aggressive' ? '#ef4444' : '#eab308';
+    const patternLabel = balloonData.pattern === 'cautious' ? 'Cautious Player' : balloonData.pattern === 'aggressive' ? 'Aggressive Risk-Taker' : 'Balanced Strategist';
 
     return (
       <>
         <style>{KEYFRAME_STYLES}</style>
         <div className="max-w-lg mx-auto mt-12" style={{ animation: 'resultCardIn 0.5s ease-out' }}>
           {renderHUD()}
-          <div className="bg-card-bg dark:bg-card-bg-dark p-8 rounded-3xl shadow-xl border border-text-main/5 dark:border-white/5 text-center">
-            <div className="size-16 mx-auto mb-4 rounded-full bg-orange-500/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-4xl text-orange-500">explore</span>
-            </div>
-            <h2 className="text-2xl font-black text-text-main dark:text-white mb-1">Phase 2 Complete</h2>
-            <p className="text-sm text-text-muted mb-6">Risk & Reward Results</p>
-
-            <div className="grid grid-cols-3 gap-3 mb-6">
-              <div className="bg-background-light dark:bg-white/5 rounded-xl p-3">
-                <p className="text-[10px] text-text-muted uppercase font-bold mb-1">Score</p>
-                <p className="text-2xl font-black text-primary">{p2Score}</p>
+          <div className="bg-card-bg dark:bg-card-bg-dark p-8 rounded-3xl shadow-xl border border-text-main/5 dark:border-white/5">
+            <div className="text-center mb-5">
+              <div className="size-16 mx-auto mb-4 rounded-full flex items-center justify-center" style={{ backgroundColor: `${patternColor}15` }}>
+                <span className="material-symbols-outlined text-4xl" style={{ color: patternColor }}>{patternIcon}</span>
               </div>
-              <div className="bg-background-light dark:bg-white/5 rounded-xl p-3">
+              <h2 className="text-2xl font-black text-text-main dark:text-white mb-1">Your Risk Pattern</h2>
+              <div
+                className="inline-block px-4 py-1.5 rounded-full text-sm font-black mt-1"
+                style={{ backgroundColor: `${patternColor}15`, color: patternColor }}
+              >
+                {patternLabel}
+              </div>
+            </div>
+
+            {/* Pattern description */}
+            <div className="bg-background-light dark:bg-white/5 rounded-xl p-4 mb-5 text-center">
+              <p className="text-sm text-text-main dark:text-white">{balloonData.description}</p>
+            </div>
+
+            {/* Quick stats */}
+            <div className="grid grid-cols-3 gap-3 mb-5">
+              <div className="bg-background-light dark:bg-white/5 rounded-xl p-3 text-center">
+                <p className="text-[10px] text-text-muted uppercase font-bold mb-1">Rounds</p>
+                <p className="text-xl font-black text-text-main dark:text-white">{balloonHistory.length}</p>
+              </div>
+              <div className="bg-background-light dark:bg-white/5 rounded-xl p-3 text-center">
                 <p className="text-[10px] text-text-muted uppercase font-bold mb-1">Banked</p>
-                <p className="text-2xl font-black text-green-500">{bankedCount}</p>
+                <p className="text-xl font-black text-green-500">{bankedCount}</p>
               </div>
-              <div className="bg-background-light dark:bg-white/5 rounded-xl p-3">
+              <div className="bg-background-light dark:bg-white/5 rounded-xl p-3 text-center">
                 <p className="text-[10px] text-text-muted uppercase font-bold mb-1">Popped</p>
-                <p className="text-2xl font-black text-red-500">{poppedCount}</p>
+                <p className="text-xl font-black text-red-500">{poppedCount}</p>
               </div>
             </div>
 
-            <div className="bg-background-light dark:bg-white/5 rounded-xl p-3 mb-6">
-              <p className="text-lg font-black text-text-main dark:text-white">Total Banked: ${totalBanked}</p>
+            {/* Risk Tolerance shift */}
+            <div className="bg-background-light dark:bg-white/5 rounded-2xl p-4 mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-text-muted uppercase tracking-wider">Risk Tolerance Impact</span>
+                <span className="text-xs font-black" style={{ color: balloonData.riskDelta > 0 ? '#f97316' : balloonData.riskDelta < 0 ? '#3b82f6' : '#888' }}>
+                  {balloonData.riskDelta > 0 ? '+' : ''}{balloonData.riskDelta}
+                </span>
+              </div>
+              <SpectrumBar dimKey="riskTolerance" value={riskAfterBalloon} />
             </div>
 
             <button
-              onClick={() => setMasterPhase('phase3')}
+              onClick={() => {
+                // Apply the balloon dimension shift
+                setRiskTolerance(riskAfterBalloon);
+                setMasterPhase('phase3');
+              }}
               className="w-full py-4 bg-primary text-black font-black text-lg rounded-2xl hover:bg-[#00d64b] active:scale-[0.98] transition-all shadow-lg shadow-primary/20"
             >
               Continue to Phase 3
@@ -1036,7 +1284,7 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
             </div>
           </div>
 
-          {/* Meters */}
+          {/* Engagement Meters (kept for engagement) */}
           <div className="flex gap-4 mb-4">
             <MeterBar
               label="Market Share"
@@ -1098,12 +1346,6 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
                     </span>
                   </div>
                   <p className="text-sm font-semibold text-text-main dark:text-white">{choice.text}</p>
-                  <div className="flex gap-3 mt-2">
-                    <span className="text-[11px] text-text-muted">+{choice.shareDelta}% share</span>
-                    <span className="text-[11px]" style={{ color: choice.repDelta >= 0 ? '#22c55e' : '#ef4444' }}>
-                      {choice.repDelta >= 0 ? '+' : ''}{choice.repDelta} rep
-                    </span>
-                  </div>
                 </button>
               ))}
             </div>
@@ -1169,37 +1411,28 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
         <style>{KEYFRAME_STYLES}</style>
         <div className="max-w-lg mx-auto mt-12" style={{ animation: 'resultCardIn 0.5s ease-out' }}>
           {renderHUD()}
-          <div className="bg-card-bg dark:bg-card-bg-dark p-8 rounded-3xl shadow-xl border border-text-main/5 dark:border-white/5 text-center">
-            <div
-              className="size-16 mx-auto mb-4 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: `${archetype.color}15` }}
-            >
-              <span className="material-symbols-outlined text-4xl" style={{ color: archetype.color }}>{archetype.icon}</span>
-            </div>
-            <h2 className="text-2xl font-black text-text-main dark:text-white mb-1">Phase 3 Complete</h2>
-            <p className="text-sm text-text-muted mb-4">Innovation Path Results</p>
-
-            <div
-              className="inline-block px-4 py-2 rounded-full text-sm font-black mb-4"
-              style={{ backgroundColor: `${archetype.color}15`, color: archetype.color }}
-            >
-              {archetype.name}
-            </div>
-            <p className="text-sm text-text-muted mb-6">{archetype.desc}</p>
-
-            <div className="grid grid-cols-2 gap-3 mb-6">
-              <div className="bg-background-light dark:bg-white/5 rounded-xl p-3">
-                <p className="text-[10px] text-text-muted uppercase font-bold mb-1">Market Share</p>
-                <p className="text-2xl font-black text-purple-500">{marketShare}%</p>
+          <div className="bg-card-bg dark:bg-card-bg-dark p-8 rounded-3xl shadow-xl border border-text-main/5 dark:border-white/5">
+            <div className="text-center mb-5">
+              <div
+                className="size-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                style={{ backgroundColor: `${archetype.color}15` }}
+              >
+                <span className="material-symbols-outlined text-4xl" style={{ color: archetype.color }}>{archetype.icon}</span>
               </div>
-              <div className="bg-background-light dark:bg-white/5 rounded-xl p-3">
-                <p className="text-[10px] text-text-muted uppercase font-bold mb-1">Reputation</p>
-                <p className="text-2xl font-black text-amber-500">{reputation}</p>
+              <h2 className="text-2xl font-black text-text-main dark:text-white mb-1">Phase 3 Complete</h2>
+              <p className="text-sm text-text-muted mb-3">Innovation Path Results</p>
+
+              <div
+                className="inline-block px-4 py-2 rounded-full text-sm font-black mb-2"
+                style={{ backgroundColor: `${archetype.color}15`, color: archetype.color }}
+              >
+                {archetype.name}
               </div>
+              <p className="text-sm text-text-muted mb-4">{archetype.desc}</p>
             </div>
 
             {/* Choice trail */}
-            <div className="flex justify-center gap-2 mb-6">
+            <div className="flex justify-center gap-2 mb-5">
               {p3Choices.map((c, i) => (
                 <div
                   key={i}
@@ -1211,11 +1444,29 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
               ))}
             </div>
 
+            {/* Updated dimensions */}
+            <div className="bg-background-light dark:bg-white/5 rounded-2xl p-5 mb-6">
+              <p className="text-xs font-bold text-text-muted uppercase tracking-wider mb-4">Updated Profile</p>
+              {DIMENSION_CONFIG.map((dim, i) => (
+                <div key={dim.key} style={{ animation: `fadeIn 0.4s ease-out ${i * 0.1}s both` }}>
+                  <SpectrumBar
+                    dimKey={dim.key}
+                    value={
+                      dim.key === 'riskTolerance' ? riskTolerance :
+                      dim.key === 'strategicThinking' ? strategicThinking :
+                      dim.key === 'peopleFocus' ? peopleFocus :
+                      timeHorizon
+                    }
+                  />
+                </div>
+              ))}
+            </div>
+
             <button
               onClick={() => setMasterPhase('final')}
               className="w-full py-4 bg-primary text-black font-black text-lg rounded-2xl hover:bg-[#00d64b] active:scale-[0.98] transition-all shadow-lg shadow-primary/20"
             >
-              View Final Results
+              View Behavioral Profile
             </button>
           </div>
         </div>
@@ -1223,11 +1474,12 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
     );
   }
 
-  // --- FINAL SUMMARY ---
+  // --- FINAL SUMMARY: BEHAVIORAL PROFILE CARD ---
   if (masterPhase === 'final') {
-    const scores = computeScores();
     const archetype = getArchetype();
     const timeSpent = Math.round((Date.now() - startTimeRef.current) / 1000);
+    const dims = { riskTolerance, strategicThinking, peopleFocus, timeHorizon };
+    const summary = generateSummary(dims);
 
     return (
       <>
@@ -1237,72 +1489,31 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
             {/* Header */}
             <div className="text-center mb-6">
               <div className="size-20 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center" style={{ animation: 'pulseGlow 2s ease-in-out infinite' }}>
-                <span className="material-symbols-outlined text-5xl text-primary">emoji_events</span>
+                <span className="material-symbols-outlined text-5xl text-primary">psychology</span>
               </div>
-              <h2 className="text-3xl font-black text-text-main dark:text-white mb-1">Startup Survival</h2>
-              <p className="text-sm text-text-muted">Complete Assessment Results</p>
+              <h2 className="text-3xl font-black text-text-main dark:text-white mb-1">Behavioral Profile</h2>
+              <p className="text-sm text-text-muted">Your unique leadership fingerprint</p>
             </div>
 
-            {/* Overall Score */}
-            <div className="bg-background-light dark:bg-white/5 rounded-2xl p-5 mb-5 text-center">
-              <p className="text-xs text-text-muted uppercase font-bold tracking-wider mb-1">Overall Score</p>
-              <p className="text-5xl font-black text-primary" style={{ animation: 'countUp 0.5s ease-out' }}>{scores.overall}</p>
-              <p className="text-xs text-text-muted mt-1">out of 100</p>
-            </div>
-
-            {/* Phase Breakdown */}
-            <div className="space-y-3 mb-5">
-              <div className="flex items-center gap-3 bg-background-light dark:bg-white/5 rounded-xl p-3">
-                <div className="size-10 rounded-lg bg-blue-500/10 flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-lg text-blue-500">local_shipping</span>
+            {/* 4 Dimension Spectrum Bars */}
+            <div className="bg-background-light dark:bg-white/5 rounded-2xl p-5 mb-5">
+              {DIMENSION_CONFIG.map((dim, i) => (
+                <div key={dim.key} style={{ animation: `fadeIn 0.5s ease-out ${i * 0.15}s both` }}>
+                  <SpectrumBar
+                    dimKey={dim.key}
+                    value={
+                      dim.key === 'riskTolerance' ? riskTolerance :
+                      dim.key === 'strategicThinking' ? strategicThinking :
+                      dim.key === 'peopleFocus' ? peopleFocus :
+                      timeHorizon
+                    }
+                  />
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-text-muted">Phase 1: Supply Chain</span>
-                    <span className="text-sm font-black text-text-main dark:text-white">{scores.p1Score}</span>
-                  </div>
-                  <div className="h-1.5 bg-black/10 dark:bg-white/10 rounded-full mt-1.5 overflow-hidden">
-                    <div className="h-full bg-blue-500 rounded-full transition-all duration-1000" style={{ width: `${scores.p1Score}%` }} />
-                  </div>
-                </div>
-                <span className="text-[10px] text-text-muted font-bold">40%</span>
-              </div>
-
-              <div className="flex items-center gap-3 bg-background-light dark:bg-white/5 rounded-xl p-3">
-                <div className="size-10 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-lg text-orange-500">explore</span>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-text-muted">Phase 2: Risk & Reward</span>
-                    <span className="text-sm font-black text-text-main dark:text-white">{scores.p2Score}</span>
-                  </div>
-                  <div className="h-1.5 bg-black/10 dark:bg-white/10 rounded-full mt-1.5 overflow-hidden">
-                    <div className="h-full bg-orange-500 rounded-full transition-all duration-1000" style={{ width: `${scores.p2Score}%` }} />
-                  </div>
-                </div>
-                <span className="text-[10px] text-text-muted font-bold">30%</span>
-              </div>
-
-              <div className="flex items-center gap-3 bg-background-light dark:bg-white/5 rounded-xl p-3">
-                <div className="size-10 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: `${archetype.color}15` }}>
-                  <span className="material-symbols-outlined text-lg" style={{ color: archetype.color }}>{archetype.icon}</span>
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-text-muted">Phase 3: Innovation Path</span>
-                    <span className="text-sm font-black text-text-main dark:text-white">{scores.p3Score}</span>
-                  </div>
-                  <div className="h-1.5 bg-black/10 dark:bg-white/10 rounded-full mt-1.5 overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${scores.p3Score}%`, backgroundColor: archetype.color }} />
-                  </div>
-                </div>
-                <span className="text-[10px] text-text-muted font-bold">30%</span>
-              </div>
+              ))}
             </div>
 
             {/* Archetype Badge */}
-            <div className="bg-background-light dark:bg-white/5 rounded-2xl p-4 mb-6 text-center">
+            <div className="bg-background-light dark:bg-white/5 rounded-2xl p-4 mb-5 text-center">
               <p className="text-[10px] text-text-muted uppercase font-bold tracking-wider mb-2">Innovation Archetype</p>
               <div
                 className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-black"
@@ -1311,7 +1522,14 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
                 <span className="material-symbols-outlined text-lg">{archetype.icon}</span>
                 {archetype.name}
               </div>
-              <p className="text-xs text-text-muted mt-2">{archetype.desc}</p>
+            </div>
+
+            {/* Personality Summary */}
+            <div className="bg-background-light dark:bg-white/5 rounded-2xl p-5 mb-5 text-center">
+              <p className="text-[10px] text-text-muted uppercase font-bold tracking-wider mb-2">Leadership Summary</p>
+              <p className="text-base font-semibold text-text-main dark:text-white leading-relaxed" style={{ animation: 'fadeIn 0.6s ease-out 0.3s both' }}>
+                {summary}
+              </p>
             </div>
 
             {/* Time */}
@@ -1324,7 +1542,7 @@ export const BehavioralGame: React.FC<GameComponentProps> = ({ section, onComple
               onClick={handleFinalComplete}
               className="w-full py-4 bg-primary text-black font-black text-lg rounded-2xl hover:bg-[#00d64b] active:scale-[0.98] transition-all shadow-lg shadow-primary/20"
             >
-              View Results
+              View Profile
             </button>
           </div>
         </div>
