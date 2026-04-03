@@ -122,19 +122,19 @@ export const MissionBriefing: React.FC<MissionBriefingProps> = ({ module, onStar
                   <div className="shrink-0">
                     {isCompleted ? (
                       <span className="text-xs font-bold text-primary px-3 py-1.5 bg-primary/10 rounded-lg">Done</span>
-                    ) : isNext || hasStarted ? (
+                    ) : (
                       <button
                         onClick={() => onStartSection(module.id, section)}
                         className={`px-4 py-2 text-sm font-bold rounded-xl transition-all active:scale-95 ${
                           hasStarted
                             ? 'bg-red-500 text-white hover:bg-red-600 animate-pulse'
-                            : 'bg-primary text-black hover:bg-[#00d64b]'
+                            : isNext
+                            ? 'bg-primary text-black hover:bg-[#00d64b]'
+                            : 'bg-gray-100 dark:bg-white/10 text-text-main dark:text-white hover:bg-gray-200 dark:hover:bg-white/15'
                         }`}
                       >
                         {hasStarted ? 'Resume' : 'Start'}
                       </button>
-                    ) : (
-                      <span className="text-xs text-text-muted">Upcoming</span>
                     )}
                   </div>
                 </div>

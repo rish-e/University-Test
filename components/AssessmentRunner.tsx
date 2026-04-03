@@ -108,11 +108,12 @@ export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({
     );
   }
 
-  // Route to the correct game component
+  // Determine which component to render
   const GameComponent = GAME_COMPONENTS[section.id];
+  let content: React.ReactNode;
 
   if (GameComponent) {
-    return (
+    content = (
       <GameComponent
         section={section}
         onComplete={handleGameComplete}
@@ -120,11 +121,8 @@ export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({
         onXPGain={handleXPGain}
       />
     );
-  }
-
-  // Fallback for writing and video assessments
-  if (section.type === 'writing') {
-    return (
+  } else if (section.type === 'writing') {
+    content = (
       <WritingAssessment
         section={section}
         onComplete={handleGameComplete}
@@ -132,10 +130,8 @@ export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({
         onXPGain={handleXPGain}
       />
     );
-  }
-
-  if (section.type === 'video') {
-    return (
+  } else if (section.type === 'video') {
+    content = (
       <VideoAssessment
         section={section}
         onComplete={handleGameComplete}
@@ -143,17 +139,23 @@ export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({
         onXPGain={handleXPGain}
       />
     );
+  } else {
+    content = (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <p className="text-text-muted mb-4">Unknown assessment type for section: {section.id}</p>
+          <button onClick={() => onExit()} className="px-6 py-3 bg-primary text-black font-bold rounded-xl">
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
   }
 
-  // Ultimate fallback
+  // Wrap everything in a fixed fullscreen overlay
   return (
-    <div className="fixed inset-0 z-[200] bg-background-light dark:bg-background-dark flex items-center justify-center">
-      <div className="text-center">
-        <p className="text-text-muted mb-4">Unknown assessment type for section: {section.id}</p>
-        <button onClick={() => onExit()} className="px-6 py-3 bg-primary text-black font-bold rounded-xl">
-          Go Back
-        </button>
-      </div>
+    <div className="fixed inset-0 z-[200] bg-background-light dark:bg-background-dark overflow-y-auto">
+      {content}
     </div>
   );
 };
