@@ -5,7 +5,7 @@ export enum ModuleStatus {
   Locked = 'locked'
 }
 
-export type AssessmentType = 'quiz' | 'game' | 'writing' | 'video' | 'simulation';
+export type AssessmentType = 'game' | 'writing' | 'video' | 'simulation';
 
 export interface AssessmentProgress {
   step: number;
@@ -14,6 +14,8 @@ export interface AssessmentProgress {
   gameScore: number;
   simState: any;
   userAnswers?: Record<number, number>;
+  streakBest?: number;
+  xpEarned?: number;
 }
 
 export interface ModuleSection {
@@ -23,10 +25,10 @@ export interface ModuleSection {
   duration?: string;
   isCompleted: boolean;
   type: AssessmentType;
-  startTime?: number; // Timestamp when the section was started
+  startTime?: number;
   score?: number; // 0-100
   analysis?: string; // AI Insight
-  userResponse?: any; // Text or choices
+  userResponse?: any;
   progressState?: AssessmentProgress;
 }
 
@@ -34,6 +36,8 @@ export interface AssessmentModule {
   id: string;
   title: string;
   description: string;
+  narrativeTitle: string; // e.g. "The Idea Lab"
+  narrativeDesc: string;  // narrative briefing text
   icon: string;
   status: ModuleStatus;
   progress: number; // 0 to 100
@@ -41,6 +45,8 @@ export interface AssessmentModule {
   completedTasks: number;
   topics: string[];
   sections?: ModuleSection[];
+  xpEarned?: number;
+  starRating?: number; // 0-3
 }
 
 export interface UserProfile {
@@ -57,4 +63,64 @@ export interface UserProfile {
     communication: number;
     leadership: number;
   };
+}
+
+// --- GAME RESULT ---
+export interface GameResult {
+  score: number;        // 0-100 normalized
+  rawScore: number;     // game-specific raw value
+  timeSpent: number;    // seconds
+  metrics: Record<string, number>;
+  type: string;
+  data?: any;
+}
+
+// --- XP & LEVELING ---
+export interface PlayerLevel {
+  level: number;
+  title: string;
+  currentXP: number;
+  xpForNextLevel: number;
+  totalXP: number;
+}
+
+export interface XPEvent {
+  id: string;
+  amount: number;
+  source: string;
+  timestamp: number;
+  sectionId: string;
+}
+
+// --- STREAKS ---
+export interface StreakState {
+  current: number;
+  best: number;
+  multiplier: number;
+  isOnFire: boolean;
+}
+
+// --- META PROGRESS ---
+export interface MetaProgress {
+  player: PlayerLevel;
+  xpHistory: XPEvent[];
+  streak: StreakState;
+  completedGames: string[];
+  notifications: GameNotification[];
+}
+
+export interface GameNotification {
+  id: string;
+  type: 'xp_gain' | 'level_up' | 'streak' | 'complete' | 'speed_bonus';
+  message: string;
+  amount?: number;
+  timestamp: number;
+}
+
+// --- GAME COMPONENT PROPS (shared interface for all games) ---
+export interface GameComponentProps {
+  section: ModuleSection;
+  onComplete: (result: GameResult) => void;
+  onExit: (progress?: AssessmentProgress) => void;
+  onXPGain: (amount: number, source: string) => void;
 }

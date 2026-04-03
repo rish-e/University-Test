@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { UserProfile } from '../types';
+import { UserProfile, PlayerLevel } from '../types';
 import { ReminderModal } from './ReminderModal';
+import { XPBar } from './meta/XPBar';
 
 interface HeaderProps {
   user: UserProfile;
   activeTab: 'modules' | 'deadlines' | 'profile';
   onTabChange: (tab: 'modules' | 'deadlines' | 'profile') => void;
+  player?: PlayerLevel;
 }
 
-export const Header: React.FC<HeaderProps> = ({ user, activeTab, onTabChange }) => {
+export const Header: React.FC<HeaderProps> = ({ user, activeTab, onTabChange, player }) => {
   const [isReminderOpen, setIsReminderOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -31,7 +33,10 @@ export const Header: React.FC<HeaderProps> = ({ user, activeTab, onTabChange }) 
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <button 
+            {/* XP Bar */}
+            {player && <XPBar player={player} compact />}
+
+            <button
               onClick={() => setIsReminderOpen(true)}
               className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary-dark hover:bg-primary/20 transition-colors relative"
               aria-label="Set reminders"
@@ -39,10 +44,10 @@ export const Header: React.FC<HeaderProps> = ({ user, activeTab, onTabChange }) 
               <span className="material-symbols-outlined">notifications</span>
               <span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full border border-white dark:border-background-dark animate-pulse"></span>
             </button>
-            
+
             {/* User Dropdown Menu */}
             <div className="relative">
-                <button 
+                <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                   className="flex size-10 items-center justify-center rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-text-muted"
                   aria-label="Open menu"
@@ -57,24 +62,29 @@ export const Header: React.FC<HeaderProps> = ({ user, activeTab, onTabChange }) 
                       <div className="p-4 border-b border-gray-100 dark:border-white/5 bg-gray-50 dark:bg-white/5">
                         <p className="font-bold text-text-main dark:text-white truncate">{user.name}</p>
                         <p className="text-xs text-text-muted font-mono">{user.id}</p>
+                        {player && (
+                          <div className="mt-2">
+                            <XPBar player={player} />
+                          </div>
+                        )}
                       </div>
                       <div className="p-2 space-y-1">
                         <button
                             onClick={() => handleTabSelect('modules')}
                             className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-bold transition-colors ${
-                              activeTab === 'modules' 
-                                ? 'bg-[#eaf5ff] dark:bg-white/10 text-primary-dark dark:text-primary' 
+                              activeTab === 'modules'
+                                ? 'bg-[#eaf5ff] dark:bg-white/10 text-primary-dark dark:text-primary'
                                 : 'text-text-muted hover:bg-gray-50 dark:hover:bg-white/5'
                             }`}
                         >
                             <span className={`material-symbols-outlined ${activeTab === 'modules' ? 'fill-current' : ''}`}>dashboard</span>
-                            Modules
+                            Mission Control
                         </button>
                         <button
                             onClick={() => handleTabSelect('deadlines')}
                             className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-bold transition-colors ${
-                              activeTab === 'deadlines' 
-                                ? 'bg-[#eaf5ff] dark:bg-white/10 text-primary-dark dark:text-primary' 
+                              activeTab === 'deadlines'
+                                ? 'bg-[#eaf5ff] dark:bg-white/10 text-primary-dark dark:text-primary'
                                 : 'text-text-muted hover:bg-gray-50 dark:hover:bg-white/5'
                             }`}
                         >
@@ -84,8 +94,8 @@ export const Header: React.FC<HeaderProps> = ({ user, activeTab, onTabChange }) 
                         <button
                             onClick={() => handleTabSelect('profile')}
                             className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-bold transition-colors ${
-                              activeTab === 'profile' 
-                                ? 'bg-[#eaf5ff] dark:bg-white/10 text-primary-dark dark:text-primary' 
+                              activeTab === 'profile'
+                                ? 'bg-[#eaf5ff] dark:bg-white/10 text-primary-dark dark:text-primary'
                                 : 'text-text-muted hover:bg-gray-50 dark:hover:bg-white/5'
                             }`}
                         >
