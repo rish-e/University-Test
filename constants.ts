@@ -19,46 +19,22 @@ export const USER_PROFILE: UserProfile = {
 export const MODULES: AssessmentModule[] = [
   {
     id: '1',
-    title: 'Cognitive & Quantitative',
+    title: 'Quantitative Reasoning',
     narrativeTitle: 'The Idea Lab',
-    narrativeDesc: 'Every great venture starts with sharp thinking. Prove you can crunch numbers, spot patterns, and dismantle weak arguments under pressure.',
-    description: 'Numerical data interpretation, logical patterns, and abstract spatial reasoning.',
+    narrativeDesc: 'Interpret live business dashboards, crunch numbers, and prove your quantitative firepower under time pressure.',
+    description: 'Data interpretation, percentage calculations, ROI, breakeven, and market analysis.',
     icon: 'lightbulb',
     status: ModuleStatus.Active,
     progress: 0,
-    totalTasks: 4,
+    totalTasks: 1,
     completedTasks: 0,
-    topics: ['Data Dash', 'Pattern Lock', 'Spatial Rotation', 'Debate Arena'],
+    topics: ['Data Analysis', 'Business Math', 'Charts'],
     sections: [
       {
-        id: 'c1',
+        id: 'quantitative',
         title: 'Data Dash',
         description: 'Interpret live business dashboards and calculate answers under time pressure',
         duration: '20 min',
-        isCompleted: false,
-        type: 'game'
-      },
-      {
-        id: 'c2',
-        title: 'Pattern Lock',
-        description: 'Complete visual shape sequences of increasing complexity',
-        duration: '15 min',
-        isCompleted: false,
-        type: 'game'
-      },
-      {
-        id: 'c3',
-        title: 'Spatial Rotation',
-        description: 'Match rotated geometric shapes as fast as possible',
-        duration: '10 min',
-        isCompleted: false,
-        type: 'game'
-      },
-      {
-        id: 'c4',
-        title: 'Debate Arena',
-        description: 'Find and classify logical flaws in business arguments',
-        duration: '12 min',
         isCompleted: false,
         type: 'game'
       }
@@ -66,85 +42,45 @@ export const MODULES: AssessmentModule[] = [
   },
   {
     id: '2',
-    title: 'Gamified Behavioral Assessment',
+    title: 'Behavioral Assessment',
     narrativeTitle: 'The Arena',
-    narrativeDesc: 'Every founder faces chaos. Navigate supply chain disasters, build under pressure, manage risk, and choose your innovation path.',
-    description: 'Interactive challenges measuring strategy, resilience, and problem-solving speed.',
+    narrativeDesc: 'Navigate supply chain disasters, manage risk, and chart your innovation path. Every decision shapes your leadership profile.',
+    description: 'Decision-making, risk tolerance, resilience, and strategic innovation.',
     icon: 'shield',
     status: ModuleStatus.Active,
     progress: 0,
-    totalTasks: 4,
+    totalTasks: 1,
     completedTasks: 0,
-    topics: ['Supply Chain', 'Precision Tower', 'Balloon Risk', 'Innovation Path'],
+    topics: ['Strategy', 'Risk', 'Innovation'],
     sections: [
       {
-        id: 'g1',
-        title: 'Supply Chain Crisis',
-        description: 'Navigate resource allocation in a live supply chain simulation',
-        duration: '15 min',
-        isCompleted: false,
-        type: 'simulation'
-      },
-      {
-        id: 'g2',
-        title: 'Precision Tower',
-        description: 'Build the tallest tower with timing and accuracy',
-        duration: '10 min',
+        id: 'behavioral',
+        title: 'Startup Survival',
+        description: 'Navigate crises, manage risk, and chart your startup through 3 phases',
+        duration: '25 min',
         isCompleted: false,
         type: 'game'
-      },
-      {
-        id: 'g3',
-        title: 'Risk & Reward',
-        description: 'Inflate, bank, or bust — test your risk tolerance',
-        duration: '20 min',
-        isCompleted: false,
-        type: 'game'
-      },
-      {
-        id: 'g4',
-        title: 'Innovation Path',
-        description: 'Chart your startup journey through 5 critical decisions',
-        duration: '15 min',
-        isCompleted: false,
-        type: 'simulation'
       }
     ]
   },
   {
     id: '3',
-    title: 'Technical Business Skills',
+    title: 'Technical Skills',
     narrativeTitle: 'The Workshop',
-    narrativeDesc: 'Time to build the product. Show you can model finances, query data, and crunch the numbers that keep a startup alive.',
-    description: 'Hands-on assessment of Excel, SQL, and business calculations.',
+    narrativeDesc: 'Fix broken spreadsheets and write database queries. Show you can build the tools that keep a startup alive.',
+    description: 'Hands-on Excel formulas, SQL queries, and technical problem-solving.',
     icon: 'build',
-    status: ModuleStatus.NotStarted,
+    status: ModuleStatus.Active,
     progress: 0,
-    totalTasks: 3,
+    totalTasks: 1,
     completedTasks: 0,
-    topics: ['Spreadsheet Rescue', 'Query Quest', 'Startup Simulator'],
+    topics: ['Excel', 'SQL', 'Tools'],
     sections: [
       {
-        id: 't1',
-        title: 'Spreadsheet Rescue',
-        description: 'Fix broken formulas and build pivot tables in a live spreadsheet',
+        id: 'technical',
+        title: 'Tech Challenge',
+        description: 'Fix spreadsheet formulas and write SQL queries in a live environment',
         duration: '25 min',
-        isCompleted: false,
-        type: 'game'
-      },
-      {
-        id: 't2',
-        title: 'Query Quest',
-        description: 'Write SQL queries to match expected data outputs',
-        duration: '20 min',
-        isCompleted: false,
-        type: 'game'
-      },
-      {
-        id: 't3',
-        title: 'Startup Simulator',
-        description: 'Calculate ROI, breakeven, and runway from live financial data',
-        duration: '15 min',
         isCompleted: false,
         type: 'game'
       }
@@ -152,87 +88,47 @@ export const MODULES: AssessmentModule[] = [
   },
   {
     id: '4',
-    title: 'English Language Proficiency',
+    title: 'Communication',
     narrativeTitle: 'The Pitch Deck',
-    narrativeDesc: 'Communicate your vision. Analyze competitors, write the investor memo, and deliver the pitch that closes the deal.',
-    description: 'Comprehensive evaluation of reading, listening, speaking, and writing skills.',
+    narrativeDesc: 'Read client briefs, make strategic decisions, and prove you can communicate under pressure. Every choice has consequences.',
+    description: 'Reading comprehension, strategic decisions, and business communication.',
     icon: 'campaign',
-    status: ModuleStatus.NotStarted,
+    status: ModuleStatus.Active,
     progress: 0,
-    totalTasks: 4,
+    totalTasks: 1,
     completedTasks: 0,
-    topics: ['Case Command', 'Listening', 'Speaking', 'Writing'],
+    topics: ['Cases', 'Decisions', 'Strategy'],
     sections: [
       {
-        id: 'e1',
+        id: 'communication',
         title: 'Case Command',
         description: 'Read client briefs and make strategic decisions with branching consequences',
         duration: '20 min',
         isCompleted: false,
         type: 'game'
-      },
-      {
-        id: 'e2',
-        title: 'Listening & Pronunciation',
-        description: '2min business podcast → summary',
-        duration: '10 min',
-        isCompleted: false,
-        type: 'writing'
-      },
-      {
-        id: 'e3',
-        title: 'Speaking Fluency',
-        description: '3 video responses (2min each)',
-        duration: '15 min',
-        isCompleted: false,
-        type: 'video'
-      },
-      {
-        id: 'e4',
-        title: 'Writing Structure',
-        description: '200-word "Why Tetr?" essay',
-        duration: '25 min',
-        isCompleted: false,
-        type: 'writing'
       }
     ]
   },
   {
     id: '5',
-    title: 'Video Behavioral Analysis',
+    title: 'Behavioral Intelligence',
     narrativeTitle: 'The Boardroom',
-    narrativeDesc: 'Face the board. Your communication, emotional intelligence, and composure under pressure will be analyzed by AI.',
-    description: 'AI-driven analysis of communication tone, EQ, and stress response.',
+    narrativeDesc: 'Face ethical dilemmas, navigate workplace conflicts, and demonstrate emotional intelligence through high-stakes scenarios.',
+    description: 'Emotional intelligence, ethical reasoning, and leadership under pressure.',
     icon: 'meeting_room',
-    status: ModuleStatus.Locked,
+    status: ModuleStatus.Active,
     progress: 0,
-    totalTasks: 3,
+    totalTasks: 1,
     completedTasks: 0,
-    topics: ['Communication', 'EQ', 'Confidence'],
+    topics: ['EQ', 'Ethics', 'Leadership'],
     sections: [
       {
-        id: 'v1',
-        title: 'Communication Effectiveness',
-        description: 'Video Q&A analysis (tone, clarity)',
-        duration: '10 min',
+        id: 'eq-scenarios',
+        title: 'EQ Scenarios',
+        description: 'Navigate ethical dilemmas and workplace conflicts through interactive scenarios',
+        duration: '20 min',
         isCompleted: false,
-        type: 'video'
-      },
-      {
-        id: 'v2',
-        title: 'Emotional Intelligence',
-        description: '5 moral dilemma responses',
-        duration: '15 min',
-        isCompleted: false,
-        type: 'video'
-      },
-      {
-        id: 'v3',
-        title: 'Confidence & Calmness',
-        description: 'Stress question analysis (filler words, pauses)',
-        duration: '10 min',
-        isCompleted: false,
-        type: 'video'
+        type: 'game'
       }
     ]
   }

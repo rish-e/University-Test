@@ -20,8 +20,8 @@ export const WorldMap: React.FC<WorldMapProps> = ({ modules, onSelectModule }) =
       {/* Title */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h3 className="text-xl font-black text-text-main dark:text-white">Mission Control</h3>
-          <p className="text-sm text-text-muted">Select a department to begin your challenge</p>
+          <h3 className="text-xl font-black text-text-main dark:text-white">Your Challenges</h3>
+          <p className="text-sm text-text-muted">Select a challenge to begin</p>
         </div>
         <span className="text-sm text-text-muted">{modules.filter(m => m.status === ModuleStatus.Completed).length}/{modules.length} Complete</span>
       </div>
@@ -73,7 +73,7 @@ export const WorldMap: React.FC<WorldMapProps> = ({ modules, onSelectModule }) =
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className={`text-xs font-bold uppercase tracking-wider ${isLocked ? 'text-gray-400' : 'text-text-muted'}`}>
-                      Dept {idx + 1}
+                      Challenge {idx + 1}
                     </span>
                     {isActive && module.progress > 0 && (
                       <span className="px-2 py-0.5 text-[10px] font-bold bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full">

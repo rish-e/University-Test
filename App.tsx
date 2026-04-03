@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { WelcomeSection } from './components/WelcomeSection';
 import { WorldMap } from './components/meta/WorldMap';
-import { MissionBriefing } from './components/meta/MissionBriefing';
 import { LevelUpOverlay } from './components/meta/LevelUpOverlay';
 import { AssessmentRunner } from './components/AssessmentRunner';
 import { Footer } from './components/Footer';
@@ -23,12 +22,11 @@ import {
 const App: React.FC = () => {
   const [modules, setModules] = useState<AssessmentModule[]>(MODULES);
   const [userProfile, setUserProfile] = useState(USER_PROFILE);
-  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
 
   // Navigation State
   const [activeTab, setActiveTab] = useState<'modules' | 'deadlines' | 'profile'>('modules');
 
-  // Assessment runner state
+  // Assessment runner state — now each module has exactly 1 section
   const [activeAssessment, setActiveAssessment] = useState<{ moduleId: string; section: ModuleSection } | null>(null);
 
   // Meta-game state
@@ -60,15 +58,13 @@ const App: React.FC = () => {
     dailyProgress: totalProgress,
   };
 
-  const handleOpenModule = (moduleId: string) => {
-    setSelectedModuleId(moduleId);
-  };
+  // Click a module → go straight into its single game
+  const handleSelectModule = (moduleId: string) => {
+    const module = modules.find(m => m.id === moduleId);
+    if (!module || !module.sections || module.sections.length === 0) return;
+    if (module.status === ModuleStatus.Locked) return;
 
-  const handleCloseModule = () => {
-    setSelectedModuleId(null);
-  };
-
-  const handleStartSection = (moduleId: string, section: ModuleSection) => {
+    const section = module.sections[0]; // Each module has exactly 1 section
     const now = Date.now();
     let effectiveStartTime = section.startTime;
 
@@ -100,7 +96,7 @@ const App: React.FC = () => {
     let finalScore = result.score;
     let analysis = "Completed successfully.";
 
-    // AI Analysis for writing tasks
+    // AI Analysis for writing tasks (kept for future use)
     if (result.type === 'writing' && result.data && typeof result.data === 'string') {
       try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -130,9 +126,6 @@ const App: React.FC = () => {
         finalScore = 80;
         analysis = "Analysis unavailable.";
       }
-    } else if (result.type === 'video') {
-      finalScore = Math.floor(Math.random() * (95 - 75) + 75);
-      analysis = "Candidate shows strong non-verbal communication and confidence.";
     }
 
     // Update gamification state
@@ -144,16 +137,12 @@ const App: React.FC = () => {
       if (module.id !== moduleId || !module.sections) return module;
 
       const updatedSections = module.sections.map(s =>
-        s.id === section.id ? { ...s, isCompleted: true, score: finalScore, analysis: analysis, userResponse: result.data } : s
+        s.id === section.id ? { ...s, isCompleted: true, score: finalScore, analysis, userResponse: result.data } : s
       );
 
       const completedCount = updatedSections.filter(s => s.isCompleted).length;
       const totalCount = updatedSections.length;
       const newProgress = Math.round((completedCount / totalCount) * 100);
-
-      // Calculate module XP and star rating
-      const moduleScores = updatedSections.filter(s => s.isCompleted && s.score !== undefined).map(s => s.score!);
-      const avgScore = moduleScores.length > 0 ? moduleScores.reduce((a, b) => a + b, 0) / moduleScores.length : 0;
 
       return {
         ...module,
@@ -161,7 +150,7 @@ const App: React.FC = () => {
         completedTasks: completedCount,
         progress: newProgress,
         status: newProgress === 100 ? ModuleStatus.Completed : ModuleStatus.Active,
-        starRating: getStarRating(avgScore),
+        starRating: getStarRating(finalScore),
         xpEarned: (module.xpEarned || 0) + Math.round(50 + finalScore * 0.5),
       };
     });
@@ -169,34 +158,27 @@ const App: React.FC = () => {
     setModules(updatedModules);
 
     // Update User Profile Metrics
-    let cogSum = 0, cogCount = 0;
-    let behSum = 0, behCount = 0;
-    let techSum = 0, techCount = 0;
-    let commSum = 0, commCount = 0;
+    const metricMap: Record<string, keyof typeof userProfile.metrics> = {
+      '1': 'cognitive',
+      '2': 'behavioral',
+      '3': 'technical',
+      '4': 'communication',
+      '5': 'leadership',
+    };
 
+    const updatedMetrics = { ...userProfile.metrics };
     updatedModules.forEach(mod => {
-      if (!mod.sections) return;
-      mod.sections.forEach(sect => {
-        if (sect.isCompleted && sect.score !== undefined) {
-          if (mod.id === '1') { cogSum += sect.score; cogCount++; }
-          if (mod.id === '2') { behSum += sect.score; behCount++; }
-          if (mod.id === '3') { techSum += sect.score; techCount++; }
-          if (mod.id === '4' || mod.id === '5') { commSum += sect.score; commCount++; }
-        }
-      });
+      const metric = metricMap[mod.id];
+      if (!metric || !mod.sections) return;
+      const completedSections = mod.sections.filter(s => s.isCompleted && s.score !== undefined);
+      if (completedSections.length > 0) {
+        updatedMetrics[metric] = Math.round(
+          completedSections.reduce((sum, s) => sum + s.score!, 0) / completedSections.length
+        );
+      }
     });
 
-    setUserProfile(prev => ({
-      ...prev,
-      metrics: {
-        cognitive: cogCount > 0 ? Math.round(cogSum / cogCount) : 0,
-        technical: techCount > 0 ? Math.round(techSum / techCount) : 0,
-        behavioral: behCount > 0 ? Math.round(behSum / behCount) : 0,
-        communication: commCount > 0 ? Math.round(commSum / commCount) : 0,
-        leadership: commCount > 0 ? Math.round((commSum / commCount) * 0.9) : 0,
-      }
-    }));
-
+    setUserProfile(prev => ({ ...prev, metrics: updatedMetrics }));
     setActiveAssessment(null);
   };
 
@@ -219,13 +201,6 @@ const App: React.FC = () => {
     setActiveAssessment(null);
   };
 
-  const handleXPGain = (amount: number, source: string) => {
-    // Individual XP gains during games are tracked here
-    // The main XP award happens in completeSection
-  };
-
-  const activeModule = modules.find(m => m.id === selectedModuleId) || null;
-
   return (
     <div className="min-h-screen">
       <Header
@@ -239,7 +214,7 @@ const App: React.FC = () => {
         {activeTab === 'modules' && (
           <>
             <WelcomeSection user={dynamicUserProfile} player={metaProgress.player} />
-            <WorldMap modules={modules} onSelectModule={handleOpenModule} />
+            <WorldMap modules={modules} onSelectModule={handleSelectModule} />
           </>
         )}
 
@@ -249,22 +224,12 @@ const App: React.FC = () => {
         <Footer />
       </main>
 
-      {/* Mission Briefing Modal (replaces ModuleDetailModal) */}
-      {activeModule && !activeAssessment && (
-        <MissionBriefing
-          module={activeModule}
-          onStartSection={handleStartSection}
-          onClose={handleCloseModule}
-        />
-      )}
-
-      {/* Assessment Runner */}
+      {/* Assessment Runner — direct game launch */}
       {activeAssessment && (
         <AssessmentRunner
           section={activeAssessment.section}
           onComplete={handleAssessmentComplete}
           onExit={handleAssessmentExit}
-          onXPGain={handleXPGain}
         />
       )}
 
