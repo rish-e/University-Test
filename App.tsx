@@ -4,6 +4,7 @@ import { WelcomeSection } from './components/WelcomeSection';
 import { WorldMap } from './components/meta/WorldMap';
 import { LevelUpOverlay } from './components/meta/LevelUpOverlay';
 import { AssessmentRunner } from './components/AssessmentRunner';
+import { StudentGate } from './components/StudentGate';
 import { Footer } from './components/Footer';
 import { DeadlinesSection } from './components/DeadlinesSection';
 import { ProfileSection } from './components/ProfileSection';
@@ -18,15 +19,83 @@ import {
   loadProgress,
   getStarRating,
 } from './gamification/engine';
+import {
+  registerStudent,
+  createTestSession,
+  getExistingSession,
+  submitSectionResult,
+  updateSessionStatus,
+} from './lib/supabase';
+
+// Section ID to result type mapping
+const SOFT_SKILL_SECTIONS = new Set(['behavioral', 'communication', 'eq-scenarios']);
 
 const App: React.FC = () => {
+  // Auth / student state
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [studentId, setStudentId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [gateLoading, setGateLoading] = useState(false);
+  const [gateError, setGateError] = useState<string | null>(null);
+  const [studentName, setStudentName] = useState('');
+  const [candidateId, setCandidateId] = useState('');
+
+  // Check for existing session on mount
+  useEffect(() => {
+    const savedStudentId = localStorage.getItem('tetr-student-id');
+    const savedSessionId = localStorage.getItem('tetr-session-id');
+    const savedName = localStorage.getItem('tetr-student-name');
+    const savedCandidateId = localStorage.getItem('tetr-candidate-id');
+
+    if (savedStudentId && savedSessionId && savedName) {
+      setStudentId(savedStudentId);
+      setSessionId(savedSessionId);
+      setStudentName(savedName);
+      setCandidateId(savedCandidateId || '');
+      setIsRegistered(true);
+    }
+  }, []);
+
+  const handleRegister = async (fullName: string, email: string) => {
+    setGateLoading(true);
+    setGateError(null);
+
+    try {
+      const { student, isReturning } = await registerStudent(fullName, email);
+
+      let session;
+      if (isReturning) {
+        // Check for existing in-progress session
+        session = await getExistingSession(student.id);
+        if (!session) {
+          session = await createTestSession(student.id);
+        }
+      } else {
+        session = await createTestSession(student.id);
+      }
+
+      // Save to localStorage for persistence
+      localStorage.setItem('tetr-student-id', student.id);
+      localStorage.setItem('tetr-session-id', session.id);
+      localStorage.setItem('tetr-student-name', fullName);
+      localStorage.setItem('tetr-candidate-id', student.candidate_id || '');
+
+      setStudentId(student.id);
+      setSessionId(session.id);
+      setStudentName(fullName);
+      setCandidateId(student.candidate_id || '');
+      setIsRegistered(true);
+    } catch (err: any) {
+      console.error('Registration failed:', err);
+      setGateError(err.message || 'Registration failed. Please try again.');
+    } finally {
+      setGateLoading(false);
+    }
+  };
+
+  // Module state
   const [modules, setModules] = useState<AssessmentModule[]>(MODULES);
-  const [userProfile, setUserProfile] = useState(USER_PROFILE);
-
-  // Navigation State
   const [activeTab, setActiveTab] = useState<'modules' | 'deadlines' | 'profile'>('modules');
-
-  // Assessment runner state — now each module has exactly 1 section
   const [activeAssessment, setActiveAssessment] = useState<{ moduleId: string; section: ModuleSection } | null>(null);
 
   // Meta-game state
@@ -34,12 +103,7 @@ const App: React.FC = () => {
   const [showLevelUp, setShowLevelUp] = useState(false);
   const [prevLevel, setPrevLevel] = useState(metaProgress.player.level);
 
-  // Persist meta progress
-  useEffect(() => {
-    saveProgress(metaProgress);
-  }, [metaProgress]);
-
-  // Check for level up
+  useEffect(() => { saveProgress(metaProgress); }, [metaProgress]);
   useEffect(() => {
     if (metaProgress.player.level > prevLevel) {
       setShowLevelUp(true);
@@ -47,24 +111,24 @@ const App: React.FC = () => {
     }
   }, [metaProgress.player.level]);
 
-  // Calculate dynamic user profile
   const totalTasks = modules.reduce((acc, mod) => acc + mod.totalTasks, 0);
   const completedTasks = modules.reduce((acc, mod) => acc + mod.completedTasks, 0);
   const totalProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   const dynamicUserProfile = {
-    ...userProfile,
+    ...USER_PROFILE,
+    name: studentName || USER_PROFILE.name,
+    id: candidateId || USER_PROFILE.id,
     totalCompletion: totalProgress,
     dailyProgress: totalProgress,
   };
 
-  // Click a module → go straight into its single game
   const handleSelectModule = (moduleId: string) => {
     const module = modules.find(m => m.id === moduleId);
     if (!module || !module.sections || module.sections.length === 0) return;
     if (module.status === ModuleStatus.Locked) return;
 
-    const section = module.sections[0]; // Each module has exactly 1 section
+    const section = module.sections[0];
     const now = Date.now();
     let effectiveStartTime = section.startTime;
 
@@ -83,10 +147,7 @@ const App: React.FC = () => {
       );
     }
 
-    setActiveAssessment({
-      moduleId,
-      section: { ...section, startTime: effectiveStartTime }
-    });
+    setActiveAssessment({ moduleId, section: { ...section, startTime: effectiveStartTime } });
   };
 
   const handleAssessmentComplete = async (result: { score: number; type: string; data?: any }) => {
@@ -96,7 +157,7 @@ const App: React.FC = () => {
     let finalScore = result.score;
     let analysis = "Completed successfully.";
 
-    // AI Analysis for writing tasks (kept for future use)
+    // AI Analysis for writing tasks
     if (result.type === 'writing' && result.data && typeof result.data === 'string') {
       try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -105,16 +166,13 @@ const App: React.FC = () => {
           contents: `Analyze this short essay/response for a business school application.
                      Task ID: ${section.id}.
                      Response: "${result.data}"
-                     Provide a score (0-100) based on clarity, structure, persuasion, and relevance to the prompt.
+                     Provide a score (0-100) based on clarity, structure, persuasion, and relevance.
                      Provide a 1-sentence behavioral insight about the candidate's traits.`,
           config: {
             responseMimeType: 'application/json',
             responseSchema: {
               type: Type.OBJECT,
-              properties: {
-                score: { type: Type.INTEGER },
-                insight: { type: Type.STRING }
-              }
+              properties: { score: { type: Type.INTEGER }, insight: { type: Type.STRING } }
             }
           }
         });
@@ -131,6 +189,27 @@ const App: React.FC = () => {
     // Update gamification state
     const { state: newMeta } = gamCompleteSection(metaProgress, section.id, finalScore);
     setMetaProgress(newMeta);
+
+    // Submit to Supabase
+    if (sessionId) {
+      const isSoftSkill = SOFT_SKILL_SECTIONS.has(section.id);
+      try {
+        await submitSectionResult({
+          sessionId,
+          sectionId: section.id,
+          sectionTitle: section.title,
+          score: finalScore,
+          timeSpent: section.startTime ? Math.floor((Date.now() - section.startTime) / 1000) : 0,
+          resultType: isSoftSkill ? 'soft_skill' : 'hard_skill',
+          rawScore: result.data?.rawScore,
+          profile: isSoftSkill ? (result.data?.profile || result.data?.finalScores) : undefined,
+          metrics: result.data?.metrics || {},
+          rawData: result.data,
+        });
+      } catch (err) {
+        console.error('Failed to submit result to Supabase:', err);
+      }
+    }
 
     // Update Modules State
     const updatedModules = modules.map(module => {
@@ -157,28 +236,30 @@ const App: React.FC = () => {
 
     setModules(updatedModules);
 
-    // Update User Profile Metrics
-    const metricMap: Record<string, keyof typeof userProfile.metrics> = {
-      '1': 'cognitive',
-      '2': 'behavioral',
-      '3': 'technical',
-      '4': 'communication',
-      '5': 'leadership',
+    // Update metrics
+    const metricMap: Record<string, keyof typeof USER_PROFILE.metrics> = {
+      '1': 'cognitive', '2': 'behavioral', '3': 'technical', '4': 'communication', '5': 'leadership',
     };
-
-    const updatedMetrics = { ...userProfile.metrics };
+    const updatedMetrics = { ...dynamicUserProfile.metrics };
     updatedModules.forEach(mod => {
       const metric = metricMap[mod.id];
       if (!metric || !mod.sections) return;
-      const completedSections = mod.sections.filter(s => s.isCompleted && s.score !== undefined);
-      if (completedSections.length > 0) {
-        updatedMetrics[metric] = Math.round(
-          completedSections.reduce((sum, s) => sum + s.score!, 0) / completedSections.length
-        );
+      const completed = mod.sections.filter(s => s.isCompleted && s.score !== undefined);
+      if (completed.length > 0) {
+        updatedMetrics[metric] = Math.round(completed.reduce((sum, s) => sum + s.score!, 0) / completed.length);
       }
     });
 
-    setUserProfile(prev => ({ ...prev, metrics: updatedMetrics }));
+    // Check if all 5 are done → update session
+    const allDone = updatedModules.every(m => m.completedTasks >= m.totalTasks);
+    if (allDone && sessionId) {
+      try {
+        await updateSessionStatus(sessionId, 'completed', newMeta.player.totalXP, newMeta.player.level, newMeta.player.title);
+      } catch (err) {
+        console.error('Failed to update session status:', err);
+      }
+    }
+
     setActiveAssessment(null);
   };
 
@@ -190,9 +271,7 @@ const App: React.FC = () => {
           return {
             ...m,
             sections: m.sections.map(s =>
-              s.id === activeAssessment.section.id
-                ? { ...s, progressState: progressToSave }
-                : s
+              s.id === activeAssessment.section.id ? { ...s, progressState: progressToSave } : s
             )
           };
         })
@@ -200,6 +279,11 @@ const App: React.FC = () => {
     }
     setActiveAssessment(null);
   };
+
+  // Show registration gate if not registered
+  if (!isRegistered) {
+    return <StudentGate onRegister={handleRegister} isLoading={gateLoading} error={gateError} />;
+  }
 
   return (
     <div className="min-h-screen">
@@ -217,14 +301,11 @@ const App: React.FC = () => {
             <WorldMap modules={modules} onSelectModule={handleSelectModule} />
           </>
         )}
-
         {activeTab === 'deadlines' && <DeadlinesSection />}
         {activeTab === 'profile' && <ProfileSection user={dynamicUserProfile} modules={modules} />}
-
         <Footer />
       </main>
 
-      {/* Assessment Runner — direct game launch */}
       {activeAssessment && (
         <AssessmentRunner
           section={activeAssessment.section}
@@ -233,12 +314,8 @@ const App: React.FC = () => {
         />
       )}
 
-      {/* Level Up Overlay */}
       {showLevelUp && (
-        <LevelUpOverlay
-          player={metaProgress.player}
-          onDismiss={() => setShowLevelUp(false)}
-        />
+        <LevelUpOverlay player={metaProgress.player} onDismiss={() => setShowLevelUp(false)} />
       )}
 
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
