@@ -13,7 +13,7 @@ export async function registerStudent(fullName: string, email: string) {
     .from('students')
     .select('id, candidate_id')
     .eq('email', email)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     return { student: existing, isReturning: true };
@@ -51,7 +51,7 @@ export async function getExistingSession(studentId: string) {
     .eq('status', 'in_progress')
     .order('started_at', { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   return data;
 }
