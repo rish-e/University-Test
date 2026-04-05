@@ -1,13 +1,12 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { ModuleSection, GameResult, AssessmentProgress } from '../types';
 import { TransitionScreen } from './assessment/shared/TransitionScreen';
 
-// Game Components
-import { SpaceDefender } from './assessment/games/SpaceDefender';
-import { MarketTrader } from './assessment/games/MarketTrader';
-import { StartupLaunch } from './assessment/games/StartupLaunch';
+import { MemoryTiles } from './assessment/games/MemoryTiles';
+import { BalloonPump } from './assessment/games/BalloonPump';
+import { ColorSwitch } from './assessment/games/ColorSwitch';
 import { PatternMachine } from './assessment/games/PatternMachine';
-import { NegotiationArena } from './assessment/games/NegotiationArena';
+import { TrustExchange } from './assessment/games/TrustExchange';
 
 interface AssessmentRunnerProps {
   section: ModuleSection;
@@ -16,16 +15,14 @@ interface AssessmentRunnerProps {
 }
 
 const GAME_COMPONENTS: Record<string, React.FC<any>> = {
-  'space-defender': SpaceDefender,
-  'market-trader': MarketTrader,
-  'startup-launch': StartupLaunch,
+  'memory-tiles': MemoryTiles,
+  'balloon-pump': BalloonPump,
+  'color-switch': ColorSwitch,
   'pattern-machine': PatternMachine,
-  'negotiation-arena': NegotiationArena,
+  'trust-exchange': TrustExchange,
 };
 
-export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({
-  section, onComplete, onExit
-}) => {
+export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({ section, onComplete, onExit }) => {
   const [showTransition, setShowTransition] = useState(false);
   const [transitionData, setTransitionData] = useState<{ score: number; xp: number } | null>(null);
 
@@ -36,11 +33,8 @@ export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({
     onComplete({ score: result.score, type: result.type, data: result.data });
   };
 
-  const handleGameExit = (progressState?: AssessmentProgress) => {
-    onExit(progressState);
-  };
-
-  const handleXPGain = (_amount: number, _source: string) => {};
+  const handleGameExit = (progressState?: AssessmentProgress) => { onExit(progressState); };
+  const handleXPGain = () => {};
 
   if (showTransition && transitionData) {
     return (
@@ -54,21 +48,13 @@ export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({
   }
 
   const GameComponent = GAME_COMPONENTS[section.id];
-
   const content = GameComponent ? (
-    <GameComponent
-      section={section}
-      onComplete={handleGameComplete}
-      onExit={handleGameExit}
-      onXPGain={handleXPGain}
-    />
+    <GameComponent section={section} onComplete={handleGameComplete} onExit={handleGameExit} onXPGain={handleXPGain} />
   ) : (
     <div className="flex items-center justify-center h-full">
       <div className="text-center">
         <p className="text-text-muted mb-4">Unknown game: {section.id}</p>
-        <button onClick={() => onExit()} className="px-6 py-3 bg-primary text-black font-bold rounded-xl">
-          Go Back
-        </button>
+        <button onClick={() => onExit()} className="px-6 py-3 bg-primary text-black font-bold rounded-xl">Go Back</button>
       </div>
     </div>
   );
