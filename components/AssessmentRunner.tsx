@@ -2,12 +2,12 @@ import React, { useState, useRef } from 'react';
 import { ModuleSection, GameResult, AssessmentProgress } from '../types';
 import { TransitionScreen } from './assessment/shared/TransitionScreen';
 
-// Game Components — one per section
-import { DataDash } from './assessment/games/DataDash';
-import { BehavioralGame } from './assessment/games/BehavioralGame';
-import { TechnicalGame } from './assessment/games/TechnicalGame';
-import { CaseCommand } from './assessment/games/CaseCommand';
-import { EQScenarios } from './assessment/games/EQScenarios';
+// Game Components
+import { SpaceDefender } from './assessment/games/SpaceDefender';
+import { MarketTrader } from './assessment/games/MarketTrader';
+import { StartupLaunch } from './assessment/games/StartupLaunch';
+import { PatternMachine } from './assessment/games/PatternMachine';
+import { NegotiationArena } from './assessment/games/NegotiationArena';
 
 interface AssessmentRunnerProps {
   section: ModuleSection;
@@ -15,13 +15,12 @@ interface AssessmentRunnerProps {
   onExit: (progress?: any) => void;
 }
 
-// Map section IDs to game components
 const GAME_COMPONENTS: Record<string, React.FC<any>> = {
-  'quantitative': DataDash,
-  'behavioral': BehavioralGame,
-  'technical': TechnicalGame,
-  'communication': CaseCommand,
-  'eq-scenarios': EQScenarios,
+  'space-defender': SpaceDefender,
+  'market-trader': MarketTrader,
+  'startup-launch': StartupLaunch,
+  'pattern-machine': PatternMachine,
+  'negotiation-arena': NegotiationArena,
 };
 
 export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({
@@ -29,45 +28,31 @@ export const AssessmentRunner: React.FC<AssessmentRunnerProps> = ({
 }) => {
   const [showTransition, setShowTransition] = useState(false);
   const [transitionData, setTransitionData] = useState<{ score: number; xp: number } | null>(null);
-  const startTimeRef = useRef(Date.now());
 
   const handleGameComplete = (result: GameResult) => {
     const xpEarned = Math.round(50 + result.score * 0.5);
     setTransitionData({ score: result.score, xp: xpEarned });
     setShowTransition(true);
-
-    onComplete({
-      score: result.score,
-      type: result.type,
-      data: result.data,
-    });
+    onComplete({ score: result.score, type: result.type, data: result.data });
   };
 
   const handleGameExit = (progressState?: AssessmentProgress) => {
     onExit(progressState);
   };
 
-  const handleXPGain = (_amount: number, _source: string) => {
-    // XP tracking handled by gamification engine on completion
-  };
+  const handleXPGain = (_amount: number, _source: string) => {};
 
-  const handleTransitionContinue = () => {
-    setShowTransition(false);
-  };
-
-  // Show transition screen after completion
   if (showTransition && transitionData) {
     return (
       <TransitionScreen
         score={transitionData.score}
         xpEarned={transitionData.xp}
         sectionTitle={section.title}
-        onContinue={handleTransitionContinue}
+        onContinue={() => setShowTransition(false)}
       />
     );
   }
 
-  // Route to the correct game component
   const GameComponent = GAME_COMPONENTS[section.id];
 
   const content = GameComponent ? (

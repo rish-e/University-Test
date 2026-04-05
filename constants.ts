@@ -1,10 +1,10 @@
 import { AssessmentModule, ModuleStatus, UserProfile } from './types';
 
 export const USER_PROFILE: UserProfile = {
-  name: "Alex Smith",
-  id: "#29482",
-  term: "Fall 2024",
-  avatarUrl: "https://lh3.googleusercontent.com/aida-public/AB6AXuDZwNRzasI7rQ9T0nx91EQGGq-4CXN6ROS7aF6QvjmPxitxuckr94wxld9BuoNxW6BWIqjN9FDLTuyHAHEO9SRT8aJ70qsUVoL9iGVfv706G6msuiIHilUcceciphqN8_IyKqYfI5y_-0EuV6kyYyu4qIdlKK24hfXY9Ji5ANCX01I0XJOyi4RCvCkKNKxRfEaoZT-rR43GtzSh37lHG-_CxnaTR4CLPV_25jHfzg2YOGeHqtTpTReY_sDLFyZbg7UqalNQZDkdGO0",
+  name: "Candidate",
+  id: "#00000",
+  term: "Fall 2026",
+  avatarUrl: "",
   totalCompletion: 0,
   dailyProgress: 0,
   metrics: {
@@ -19,22 +19,22 @@ export const USER_PROFILE: UserProfile = {
 export const MODULES: AssessmentModule[] = [
   {
     id: '1',
-    title: 'Quantitative Reasoning',
-    narrativeTitle: 'The Idea Lab',
-    narrativeDesc: 'Interpret live business dashboards, crunch numbers, and prove your quantitative firepower under time pressure.',
-    description: 'Data interpretation, percentage calculations, ROI, breakeven, and market analysis.',
-    icon: 'lightbulb',
+    title: 'Cognitive Assessment',
+    narrativeTitle: 'Space Defender',
+    narrativeDesc: 'Fly your ship through an asteroid field while fighting off alien threats. Your reflexes, multitasking, and decision-making under pressure reveal your cognitive baseline.',
+    description: 'Processing speed, multitasking, risk management, and crisis decision-making.',
+    icon: 'rocket_launch',
     status: ModuleStatus.Active,
     progress: 0,
     totalTasks: 1,
     completedTasks: 0,
-    topics: ['Data Analysis', 'Business Math', 'Charts'],
+    topics: ['Reflexes', 'Multitasking', 'Risk'],
     sections: [
       {
-        id: 'quantitative',
-        title: 'Data Dash',
-        description: 'Interpret live business dashboards and calculate answers under time pressure',
-        duration: '20 min',
+        id: 'space-defender',
+        title: 'Space Defender',
+        description: 'Dodge asteroids, shoot aliens, manage resources — all at once',
+        duration: '5 min',
         isCompleted: false,
         type: 'game'
       }
@@ -42,22 +42,22 @@ export const MODULES: AssessmentModule[] = [
   },
   {
     id: '2',
-    title: 'Behavioral Assessment',
-    narrativeTitle: 'The Arena',
-    narrativeDesc: 'Navigate supply chain disasters, manage risk, and chart your innovation path. Every decision shapes your leadership profile.',
-    description: 'Decision-making, risk tolerance, resilience, and strategic innovation.',
-    icon: 'shield',
+    title: 'Financial Reasoning',
+    narrativeTitle: 'Market Trader',
+    narrativeDesc: 'Trade assets in a live simulated market. React to breaking news, spot patterns in price movements, and manage your portfolio under time pressure.',
+    description: 'Numerical intuition, risk tolerance, pattern recognition, and decision speed.',
+    icon: 'trending_up',
     status: ModuleStatus.Active,
     progress: 0,
     totalTasks: 1,
     completedTasks: 0,
-    topics: ['Strategy', 'Risk', 'Innovation'],
+    topics: ['Trading', 'Risk', 'Numbers'],
     sections: [
       {
-        id: 'behavioral',
-        title: 'Startup Survival',
-        description: 'Navigate crises, manage risk, and chart your startup through 3 phases',
-        duration: '25 min',
+        id: 'market-trader',
+        title: 'Market Trader',
+        description: 'Buy and sell assets, react to market news, grow your portfolio',
+        duration: '8 min',
         isCompleted: false,
         type: 'game'
       }
@@ -65,22 +65,22 @@ export const MODULES: AssessmentModule[] = [
   },
   {
     id: '3',
-    title: 'Technical Skills',
-    narrativeTitle: 'The Workshop',
-    narrativeDesc: 'Fix broken spreadsheets and write database queries. Show you can build the tools that keep a startup alive.',
-    description: 'Hands-on Excel formulas, SQL queries, and technical problem-solving.',
-    icon: 'build',
+    title: 'Strategic Thinking',
+    narrativeTitle: 'Startup Launch',
+    narrativeDesc: 'You have $10,000 and 10 weeks to grow a startup. Allocate budget, pick channels, react to competitors, and pivot when the market shifts.',
+    description: 'Resource allocation, adaptability, strategic reasoning, and competitive awareness.',
+    icon: 'storefront',
     status: ModuleStatus.Active,
     progress: 0,
     totalTasks: 1,
     completedTasks: 0,
-    topics: ['Excel', 'SQL', 'Tools'],
+    topics: ['Strategy', 'Budget', 'Growth'],
     sections: [
       {
-        id: 'technical',
-        title: 'Tech Challenge',
-        description: 'Fix spreadsheet formulas and write SQL queries in a live environment',
-        duration: '25 min',
+        id: 'startup-launch',
+        title: 'Startup Launch',
+        description: 'Allocate budget, pick marketing channels, outgrow your competitors',
+        duration: '8 min',
         isCompleted: false,
         type: 'game'
       }
@@ -88,22 +88,22 @@ export const MODULES: AssessmentModule[] = [
   },
   {
     id: '4',
-    title: 'Communication',
-    narrativeTitle: 'The Pitch Deck',
-    narrativeDesc: 'Read client briefs, make strategic decisions, and prove you can communicate under pressure. Every choice has consequences.',
-    description: 'Reading comprehension, strategic decisions, and business communication.',
-    icon: 'campaign',
+    title: 'Analytical Reasoning',
+    narrativeTitle: 'Pattern Machine',
+    narrativeDesc: 'A machine with hidden rules. Press buttons, observe outputs, and figure out how it works. Each level adds complexity. Think like a scientist.',
+    description: 'Scientific thinking, hypothesis testing, logical deduction, and learning agility.',
+    icon: 'extension',
     status: ModuleStatus.Active,
     progress: 0,
     totalTasks: 1,
     completedTasks: 0,
-    topics: ['Cases', 'Decisions', 'Strategy'],
+    topics: ['Logic', 'Discovery', 'Analysis'],
     sections: [
       {
-        id: 'communication',
-        title: 'Case Command',
-        description: 'Read client briefs and make strategic decisions with branching consequences',
-        duration: '20 min',
+        id: 'pattern-machine',
+        title: 'Pattern Machine',
+        description: 'Discover hidden rules by experimenting with a mysterious machine',
+        duration: '6 min',
         isCompleted: false,
         type: 'game'
       }
@@ -111,22 +111,22 @@ export const MODULES: AssessmentModule[] = [
   },
   {
     id: '5',
-    title: 'Behavioral Intelligence',
-    narrativeTitle: 'The Boardroom',
-    narrativeDesc: 'Face ethical dilemmas, navigate workplace conflicts, and demonstrate emotional intelligence through high-stakes scenarios.',
-    description: 'Emotional intelligence, ethical reasoning, and leadership under pressure.',
-    icon: 'meeting_room',
+    title: 'Social Strategy',
+    narrativeTitle: 'Negotiation Arena',
+    narrativeDesc: 'Face off against an AI opponent in a 12-round pricing battle. Cooperate for mutual gain or undercut for short-term profit. Your strategy reveals how you work with others.',
+    description: 'Cooperation, trust, strategic consistency, and competitive instincts.',
+    icon: 'handshake',
     status: ModuleStatus.Active,
     progress: 0,
     totalTasks: 1,
     completedTasks: 0,
-    topics: ['EQ', 'Ethics', 'Leadership'],
+    topics: ['Negotiation', 'Trust', 'Strategy'],
     sections: [
       {
-        id: 'eq-scenarios',
-        title: 'EQ Scenarios',
-        description: 'Navigate ethical dilemmas and workplace conflicts through interactive scenarios',
-        duration: '20 min',
+        id: 'negotiation-arena',
+        title: 'Negotiation Arena',
+        description: 'Set prices against an AI opponent — cooperate or compete',
+        duration: '6 min',
         isCompleted: false,
         type: 'game'
       }
